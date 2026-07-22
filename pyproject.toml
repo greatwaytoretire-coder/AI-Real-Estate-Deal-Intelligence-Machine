@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-real-estate-deal-intelligence-machine"
+version = "0.1.0"
+description = "Phase 0 foundation for the AI Real Estate Deal Intelligence Machine"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ai_real_estate_deal_intelligence_machine*"]

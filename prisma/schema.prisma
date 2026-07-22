@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  label       String
+  sourceType  String   @default("mock")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sourceFeeds SourceFeed[]
+  auditLogs   AuditLog[]
+
+  @@map("providers")
+}
+
+model SourceFeed {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id])
+  feedName    String
+  sourceType  String   @default("mock")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("source_feeds")
+}
+
+model PropertyOpportunity {
+  id                 String   @id @default(cuid())
+  externalId         String   @unique
+  market             String?
+  address            String?
+  estimatedArv       Float?
+  repairEstimate     Float?
+  estimatedProfit    Float?
+  opportunityScore   Float?
+  riskScore          Float?
+  confidenceScore    Float?
+  createdAt          DateTime @default(now())
+
+  @@map("property_opportunities")
+}
+
+model MarketSignal {
+  id               String   @id @default(cuid())
+  marketName       String
+  score            Float?
+  confidence       Float?
+  createdAt        DateTime @default(now())
+
+  @@map("market_signals")
+}
+
+model BuyerSignal {
+  id               String   @id @default(cuid())
+  buyerName        String
+  demandScore      Float?
+  reliabilityScore Float?
+  createdAt        DateTime @default(now())
+
+  @@map("buyer_signals")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  providerId  String?
+  provider    Provider? @relation(fields: [providerId], references: [id])
+  eventType   String
+  details     String
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+}
