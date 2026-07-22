@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Set
 from uuid import uuid4
 
 from .audit_logger import AuditLogger
-from .phase23 import EndToEndDealSimulation
 from .phase28 import Job as ReliabilityJob
 from .phase26 import ProviderManager
 from .phase29 import ScalingManager
