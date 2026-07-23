@@ -2,20 +2,19 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from .base import BaseProvider, ProviderRecord
+from .base import DataProvider, ProviderConfig
+from ..phase24 import DataSourceType
 
 
-class MockPropertyProvider(BaseProvider):
-    @property
-    def record(self) -> ProviderRecord:
-        return ProviderRecord(
+class MockPropertyProvider(DataProvider):
+    def get_config(self) -> ProviderConfig:
+        return ProviderConfig(
             name="mock_property_feed",
             label="Mock Property Feed",
-            source_type="mock",
-            enabled=True,
+            source_type=DataSourceType.MOCK,
         )
 
-    def fetch(self) -> List[Dict[str, Any]]:
+    def fetch(self, query: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             {
                 "id": "prop-001",
@@ -28,17 +27,15 @@ class MockPropertyProvider(BaseProvider):
         ]
 
 
-class MockMarketProvider(BaseProvider):
-    @property
-    def record(self) -> ProviderRecord:
-        return ProviderRecord(
+class MockMarketProvider(DataProvider):
+    def get_config(self) -> ProviderConfig:
+        return ProviderConfig(
             name="mock_market_feed",
             label="Mock Market Feed",
-            source_type="mock",
-            enabled=True,
+            source_type=DataSourceType.MOCK,
         )
 
-    def fetch(self) -> List[Dict[str, Any]]:
+    def fetch(self, query: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             {
                 "market": "Phoenix",
@@ -49,17 +46,15 @@ class MockMarketProvider(BaseProvider):
         ]
 
 
-class MockBuyerProvider(BaseProvider):
-    @property
-    def record(self) -> ProviderRecord:
-        return ProviderRecord(
+class MockBuyerProvider(DataProvider):
+    def get_config(self) -> ProviderConfig:
+        return ProviderConfig(
             name="mock_buyer_feed",
             label="Mock Buyer Feed",
-            source_type="mock",
-            enabled=True,
+            source_type=DataSourceType.MOCK,
         )
 
-    def fetch(self) -> List[Dict[str, Any]]:
+    def fetch(self, query: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             {
                 "buyer_name": "Mock Buyer Alpha",
@@ -68,3 +63,15 @@ class MockBuyerProvider(BaseProvider):
                 "source_type": "mock",
             }
         ]
+
+
+class MockAttomProvider(DataProvider):
+    """Mock provider for ATTOM data, used for fallback and testing."""
+
+    def get_config(self) -> ProviderConfig:
+        return ProviderConfig(
+            name="attom_mock", label="ATTOM API (Mock)", source_type=DataSourceType.MOCK
+        )
+
+    def fetch(self, query: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return [{"address": "123 Mock St", "attom_id": "12345", "source": "mock"}]

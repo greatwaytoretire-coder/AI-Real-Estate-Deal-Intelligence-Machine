@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .audit_logger import AuditLogger
+from .config import DATA_DIR
 from .db_client import DatabaseClient
 from .phase3 import HeatMapEngine, MarketAlertSystem, MarketIntelligenceAgent
 from .phase4 import PropertyDiscoveryAgent
@@ -29,8 +30,8 @@ class IntegrationStageResult:
 
 class EndToEndIntegrationHarness:
     def __init__(self, db_path: Optional[Path] = None, audit_log_path: Optional[Path] = None, simulate_failure: Optional[str] = None) -> None:
-        self.db_client = DatabaseClient(database_path=db_path or Path("data/phase22.db"))
-        self.audit_logger = AuditLogger(log_path=audit_log_path or Path("data/phase22-audit.log"))
+        self.db_client = DatabaseClient(database_path=db_path or DATA_DIR / "phase22.db")
+        self.audit_logger = AuditLogger(log_path=audit_log_path or DATA_DIR / "phase22-audit.log")
         self.simulate_failure = simulate_failure
         self._stage_results: Dict[str, IntegrationStageResult] = {}
 

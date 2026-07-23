@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import os
-from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from .phase26 import DataProvider, ProviderConfig
+from .providers.base import DataProvider, ProviderConfig
 from .phase24 import DataSourceType
 
 
-class LiveDataProvider(DataProvider, ABC):
+class LiveDataProvider(DataProvider):
     """Abstract base class for providers connecting to live, external data sources."""
 
     def __init__(self, api_key: str):

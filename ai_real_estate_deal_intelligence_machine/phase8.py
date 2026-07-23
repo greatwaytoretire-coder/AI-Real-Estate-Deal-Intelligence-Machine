@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .audit_logger import AuditLogger
 from .phase36 import AgentContract, AgentInput, AgentOutput, AIAgent
@@ -18,7 +18,7 @@ class RiskAssessment:
 @dataclass
 class DealRiskAgentInput(AgentInput):
     """Inputs required for the DealRiskAgent."""
-    deal_id: str
+    deal_id: Optional[str] = None
 
     def as_dict(self) -> Dict[str, Any]:
         return {

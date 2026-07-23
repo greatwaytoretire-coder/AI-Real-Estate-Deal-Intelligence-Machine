@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .audit_logger import AuditLogger
-from .phase36 import AgentContract, AgentInput, AgentOutput, AIAgent
+from .agents.base import AgentContract, AgentInput, AgentOutput, AIAgent
 from .phase4 import PropertyProfile
 from .phase29 import ScalingManager # Assuming a way to access this
 
@@ -44,7 +44,7 @@ class PriorityDealQueue:
 @dataclass
 class ScoringInput(AgentInput):
     """Inputs for the scoring engine."""
-    property_profile: PropertyProfile
+    property_profile: Optional[PropertyProfile] = None
 
 
 @dataclass

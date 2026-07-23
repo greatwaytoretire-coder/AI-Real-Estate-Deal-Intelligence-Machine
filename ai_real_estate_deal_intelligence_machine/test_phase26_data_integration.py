@@ -4,13 +4,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
+from ai_real_estate_deal_intelligence_machine.config import DATA_DIR
 from ai_real_estate_deal_intelligence_machine.phase24 import DataSourceType
 from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
 
 
 class Phase26DataProviderIntegrationTest(unittest.TestCase):
     def setUp(self):
-        self.log_path = Path("data/test_phase26_audit.log")
+        self.log_path = DATA_DIR / "test_phase26_audit.log"
         self.log_path.unlink(missing_ok=True)
         self.audit_logger = AuditLogger(log_path=self.log_path)
 
@@ -30,20 +31,22 @@ class Phase26DataProviderIntegrationTest(unittest.TestCase):
 
         manager_mock_mode = ProviderManager(audit_logger=self.audit_logger)
         self.assertIn("attom", manager_mock_mode.providers)
+        mock_provider = manager_mock_mode.providers["attom"]
 
         # Fetch data and verify it's from the MOCK source
-        records_mock = manager_mock_mode.fetch_data("attom", {"zip": "12345"})
+        records_mock = mock_provider.fetch({"zip": "12345"})
         self.assertEqual(len(records_mock), 1)
-        self.assertEqual(records_mock[0].source, DataSourceType.MOCK)
-        self.assertEqual(records_mock[0].source_label, "attom_mock")
+        self.assertEqual(mock_provider.get_config().source_type, DataSourceType.MOCK)
+        self.assertEqual(records_mock[0]['source'], "mock")
 
         # 2. Test Live Behavior (API key IS set)
         os.environ["ATTOM_API_KEY"] = "test-key-is-set"
 
         manager_live_mode = ProviderManager(audit_logger=self.audit_logger)
+        live_provider = manager_live_mode.providers["attom"]
 
         # Fetch data and verify it's from the LIVE source
-        records_live = manager_live_mode.fetch_data("attom", {"zip": "54321"})
+        records_live = live_provider.fetch({"zip": "54321"})
         self.assertEqual(len(records_live), 1)
-        self.assertEqual(records_live[0].source, DataSourceType.LIVE)
-        self.assertEqual(records_live[0].source_label, "attom_api")
+        self.assertEqual(live_provider.get_config().source_type, DataSourceType.LIVE)
+        self.assertEqual(records_live[0]['provider'], "attom_api")

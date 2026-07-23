@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 from .phase3 import MarketIntelligenceAgent, MarketScore
 from .phase4 import PropertyDiscoveryAgent, PropertyProfile
 from .phase5 import DealScorecard, OpportunityScoringEngine
-from .phase6 import ARVAnalysisAgent, ComparableSalesAgent, RepairEstimationAgent
+from .phase6 import ARVAgent, ComparableSalesAgent, RepairEstimationAgent
 from .phase7 import DealUnderwritingAgent, UnderwritingResult
 from .phase8 import DealRiskAgent, RiskAssessment
 from .phase9 import BuyerIntelligenceEngine, BuyerProfile
@@ -85,7 +85,7 @@ class EndToEndDealSimulation:
         context["comp_set"] = comp_set
 
         # 5. Underwriting (ARV, Repair, Costs)
-        arv_agent = ARVAnalysisAgent()
+        arv_agent = ARVAgent()
         arv_estimate = run_stage("ARV Calculation", arv_agent.estimate_arv, comp_set)
         if not arv_estimate:
             return report

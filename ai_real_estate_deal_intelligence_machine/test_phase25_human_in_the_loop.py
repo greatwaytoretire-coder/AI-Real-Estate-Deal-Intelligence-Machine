@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
+from ai_real_estate_deal_intelligence_machine.config import DATA_DIR
 from ai_real_estate_deal_intelligence_machine.phase25 import (
     ActionForApproval,
     ApprovalStatus,
@@ -13,7 +14,7 @@ from ai_real_estate_deal_intelligence_machine.phase25 import (
 class Phase25HumanInTheLoopTest(unittest.TestCase):
     def setUp(self):
         """Set up a fresh engine and logger for each test."""
-        self.log_path = Path("data/test_phase25_audit.log")
+        self.log_path = DATA_DIR / "test_phase25_audit.log"
         self.log_path.unlink(missing_ok=True)
         self.audit_logger = AuditLogger(log_path=self.log_path)
         self.hitl_engine = HumanInTheLoopEngine(audit_logger=self.audit_logger)

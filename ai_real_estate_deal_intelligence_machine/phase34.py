@@ -221,4 +221,3 @@ class BuyerDealMatcher:
             )
 
         return sorted(results, key=lambda r: r.match_score, reverse=True)
-        )

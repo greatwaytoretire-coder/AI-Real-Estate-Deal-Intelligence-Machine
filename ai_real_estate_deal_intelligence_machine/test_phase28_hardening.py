@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
+from ai_real_estate_deal_intelligence_machine.config import DATA_DIR
 from ai_real_estate_deal_intelligence_machine.phase28 import (
     AutonomyLevel,
     ReliabilityEngine,
@@ -12,7 +13,7 @@ from ai_real_estate_deal_intelligence_machine.phase28 import (
 
 class Phase28HardeningTest(unittest.TestCase):
     def setUp(self):
-        self.log_path = Path("data/test_phase28_audit.log")
+        self.log_path = DATA_DIR / "test_phase28_audit.log"
         self.log_path.unlink(missing_ok=True)
         self.audit_logger = AuditLogger(log_path=self.log_path)
         self.system_state = SystemState(audit_logger=self.audit_logger)
