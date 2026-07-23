@@ -9,10 +9,9 @@ from typing import Any, Dict, List, Set
 from uuid import uuid4
 
 from .audit_logger import AuditLogger
-from .phase28 import Job as ReliabilityJob
 from .phase26 import ProviderManager
 from .phase29 import ScalingManager
-from .phase28 import ReliabilityEngine, SystemState
+from .jobs.base import Job, JobStatus
 
 
 class OperatingMode(str, Enum):
@@ -59,24 +58,6 @@ class RuntimeEvent:
     entity_id: str = ""
     payload_ref: str = ""  # e.g., a path to the raw data in S3
     status: str = "PENDING"
-
-
-class JobStatus(str, Enum):
-    """Lifecycle of a job in the runtime queue."""
-
-    PENDING = "PENDING"
-    RUNNING = "RUNNING"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    RETRY_SCHEDULED = "RETRY_SCHEDULED"
-    DEAD_LETTER = "DEAD_LETTER"
-
-
-@dataclass
-class Job(ReliabilityJob):
-    """Extends the reliability job with a formal status."""
-
-    status: JobStatus = JobStatus.PENDING
 
 
 class DeduplicationEngine:

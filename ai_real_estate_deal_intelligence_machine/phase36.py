@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from typing import List
 from .agents.base import AgentContract, AgentInput, AgentOutput, AIAgent
 from .audit_logger import AuditLogger
-from .phase30 import Job
+from .jobs.base import Job
 
 
 @dataclass

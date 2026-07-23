@@ -7,7 +7,7 @@ from ai_real_estate_deal_intelligence_machine.phase8 import (
     DealRiskAgentInput,
     DealRiskAgentOutput,
 )
-from ai_real_estate_deal_intelligence_machine.phase30 import Job
+from ai_real_estate_deal_intelligence_machine.jobs.base import Job
 from ai_real_estate_deal_intelligence_machine.phase36 import AgentContract, AgentOrchestrator
 
 

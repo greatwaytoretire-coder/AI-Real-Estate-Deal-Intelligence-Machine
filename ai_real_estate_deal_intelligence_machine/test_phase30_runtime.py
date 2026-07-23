@@ -3,11 +3,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
-from ai_real_estate_deal_intelligence_machine.phase30 import (
-    ContinuousRuntime,
-    JobStatus,
-    OperatingMode,
-)
+from ai_real_estate_deal_intelligence_machine.phase30 import ContinuousRuntime, OperatingMode
+from ai_real_estate_deal_intelligence_machine.jobs.base import JobStatus
 from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
 from ai_real_estate_deal_intelligence_machine.phase29 import (
     MarketConfig,
