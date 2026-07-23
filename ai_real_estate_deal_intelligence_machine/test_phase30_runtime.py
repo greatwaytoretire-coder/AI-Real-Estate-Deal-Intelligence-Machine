@@ -1,11 +1,17 @@
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
 from ai_real_estate_deal_intelligence_machine.phase30 import (
     ContinuousRuntime,
     JobStatus,
     OperatingMode,
+)
+from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
+from ai_real_estate_deal_intelligence_machine.phase29 import (
+    MarketConfig,
+    ScalingManager,
 )
 
 
@@ -14,7 +20,18 @@ class Phase30ProductionRuntimeTest(unittest.TestCase):
         self.log_path = Path("data/test_phase30_audit.log")
         self.log_path.unlink(missing_ok=True)
         self.audit_logger = AuditLogger(log_path=self.log_path)
-        self.runtime = ContinuousRuntime(audit_logger=self.audit_logger)
+
+        # Mock the high-level dependencies required by the modern ContinuousRuntime
+        self.provider_manager = MagicMock(spec=ProviderManager)
+        self.orchestrator = MagicMock()
+        self.scaling_manager = ScalingManager()
+
+        # Configure a test market
+        self.scaling_manager.load_market_config(
+            MarketConfig(market_id="test_market", market_name="Test Market", data_providers=["mock_provider_a"])
+        )
+
+        self.runtime = ContinuousRuntime(self.audit_logger, self.provider_manager, self.orchestrator, self.scaling_manager)
 
     def tearDown(self):
         self.log_path.unlink(missing_ok=True)
@@ -25,23 +42,30 @@ class Phase30ProductionRuntimeTest(unittest.TestCase):
         """
         self.runtime.mode = OperatingMode.MOCK
 
+        # Mock the provider's response
+        mock_provider = MagicMock()
+        self.provider_manager.providers = {"mock_provider_a": mock_provider}
+
         # 1. Ingest new data from a provider
-        raw_data = [
+        mock_provider.fetch.return_value = [
             {"id": "rec-001", "provider": "mock_provider_a", "address": "123 Main St", "zip": "12345"},
             {"id": "rec-002", "provider": "mock_provider_a", "address": "456 Oak Ave", "zip": "67890"},
         ]
-        ingestion_run = self.runtime.run_ingestion("mock_provider_a", raw_data)
+        ingestion_run = self.runtime.run_ingestion_for_market("test_market", {})
 
         self.assertEqual(ingestion_run.records_discovered, 2)
         self.assertEqual(ingestion_run.records_inserted, 2)
         self.assertEqual(ingestion_run.records_skipped, 0)
         self.assertEqual(len(self.runtime.job_queue.pending_queue), 2)
 
+        # Mock the orchestrator's behavior for the worker
+        self.orchestrator.handle_job.return_value = MagicMock(error=None)
+
         # 2. Ingest duplicate data and verify deduplication
-        duplicate_data = [
+        mock_provider.fetch.return_value = [
             {"id": "rec-003", "provider": "mock_provider_a", "address": "123 Main St", "zip": "12345"},
         ]
-        ingestion_run_2 = self.runtime.run_ingestion("mock_provider_a", duplicate_data)
+        ingestion_run_2 = self.runtime.run_ingestion_for_market("test_market", {})
         self.assertEqual(ingestion_run_2.records_discovered, 1)
         self.assertEqual(ingestion_run_2.records_inserted, 0)
         self.assertEqual(ingestion_run_2.records_skipped, 1)
