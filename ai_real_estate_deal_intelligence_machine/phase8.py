@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 from .audit_logger import AuditLogger
-from .phase36 import AgentContract, AgentInput, AgentOutput, AIAgent
+from .agents.base import AgentContract, AgentInput, AgentOutput, AIAgent
 
 
 @dataclass
