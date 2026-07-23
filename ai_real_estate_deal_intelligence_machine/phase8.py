@@ -22,10 +22,9 @@ class DealRiskAgentInput(AgentInput):
 
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "risk_score": self.risk_score,
-            "critical_risk": self.critical_risk,
-            "warning": self.warning,
-            "information_gap": self.information_gap,
+            "correlation_id": self.correlation_id,
+            "market_id": self.market_id,
+            "deal_id": self.deal_id,
         }
 
 
