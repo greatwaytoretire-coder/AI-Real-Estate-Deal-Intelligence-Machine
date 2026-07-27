@@ -89,7 +89,7 @@ class LivePilotRunner:
 
     def run(self, all_opportunities: List[CanonicalProperty]) -> PilotReport:
         """Executes the pilot workflow and generates a report."""
-        report = PilotReport(config=self.config, data_mode=self.runtime.mode.value)
+        report = PilotReport(config=self.config, data_mode=self.runtime.mode.value.upper())
 
         # 1. Filter opportunities based on pilot configuration
         accepted_opportunities, rejected_opportunities = self._filter_opportunities(all_opportunities)

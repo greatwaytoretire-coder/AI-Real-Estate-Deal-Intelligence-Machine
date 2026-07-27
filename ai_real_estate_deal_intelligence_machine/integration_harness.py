@@ -235,5 +235,6 @@ class EndToEndIntegrationHarness:
             "audit_logs": self.db_client.list_audit_logs(),
             "stage_records": self.db_client.list_stage_results(),
         }
+        # The harness owns the client, so it must close it.
         self.db_client.close()
         return trace

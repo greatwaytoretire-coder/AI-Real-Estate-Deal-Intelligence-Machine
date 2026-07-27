@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from .agents.base import (
+    AIAgent,
+    AgentContract,
+    AgentInput,
+    AgentOutput,
+)
 from .audit_logger import AuditLogger
-from .agents.base import AgentContract, AgentInput, AgentOutput, AIAgent
 from .phase4 import PropertyProfile
-from .phase29 import ScalingManager # Assuming a way to access this
+
 
 @dataclass
 class DealScorecard:
@@ -38,64 +43,114 @@ class PriorityDealQueue:
         self.items.append(item)
 
     def ranked(self) -> List[Dict[str, Any]]:
-        return sorted(self.items, key=lambda entry: entry["priority"], reverse=True)
+        return sorted(
+            self.items,
+            key=lambda entry: entry["priority"],
+            reverse=True,
+        )
 
 
 @dataclass
 class ScoringInput(AgentInput):
     """Inputs for the scoring engine."""
+
     property_profile: Optional[PropertyProfile] = None
+    scoring_model_version: str = "default_v1"
 
 
 @dataclass
 class ScoringOutput(AgentOutput):
     """Outputs from the scoring engine."""
+
     scorecard: Optional[DealScorecard] = None
 
 
 class OpportunityScoringEngine(AIAgent):
     """Phase 5 explainable opportunity scoring foundation."""
 
-    def __init__(self, audit_logger: AuditLogger) -> None:
+    def __init__(
+        self,
+        audit_logger: Optional[AuditLogger] = None,
+    ) -> None:
         super().__init__(audit_logger)
         self.priority_queue = PriorityDealQueue()
 
     def get_contract(self) -> AgentContract:
         return AgentContract(
             agent_name="OpportunityScoringEngine",
-            purpose="To score a deal's potential and prioritize it for review.",
+            purpose=(
+                "To score a deal's potential and "
+                "prioritize it for review."
+            ),
             version="2.0.0",
-            input_schema={"property_profile": "PropertyProfile"},
-            output_schema={"scorecard": "DealScorecard"},
+            input_schema={
+                "property_profile": "PropertyProfile",
+            },
+            output_schema={
+                "scorecard": "DealScorecard",
+            },
         )
 
-    def execute(self, agent_input: ScoringInput) -> ScoringOutput:
+    def execute(
+        self,
+        agent_input: ScoringInput,
+    ) -> ScoringOutput:
         """Executes the scoring logic."""
-        self.audit_logger.log("AGENT_EXECUTE_START", f"OpportunityScoringEngine starting for correlation_id: {agent_input.correlation_id}")
 
-        # Simulate using market-specific scoring
+        self.audit_logger.log(
+            "AGENT_EXECUTE_START",
+            (
+                "OpportunityScoringEngine starting for "
+                f"correlation_id: "
+                f"{agent_input.correlation_id}"
+            ),
+        )
+
         market_id = agent_input.market_id
-        scoring_model_version = "default_v1" # Default
-        # In a real system, we'd fetch the market config:
-        # scaling_manager = ScalingManager() # This would be injected
-        # market_config = scaling_manager.get_market_config(market_id)
-        # if market_config:
-        #     scoring_model_version = market_config.scoring_model_version
+        scoring_model_version = (
+            agent_input.scoring_model_version
+        )
 
         scorecard = DealScorecard()
-        if scoring_model_version == "austin_v2": # Simulate different logic
-            scorecard.deal_potential_score = 95.0 # Austin gets a higher score
 
-        self.audit_logger.log("AGENT_EXECUTE_SUCCESS", f"Scoring complete for market '{market_id}' using model '{scoring_model_version}'.")
-        return ScoringOutput(confidence=0.9, scorecard=scorecard)
+        if scoring_model_version == "austin_v2":
+            scorecard.deal_potential_score = 95.0
 
-    def _promote_high_scoring(self, queue: PriorityDealQueue) -> List[Dict[str, Any]]:
-        """Original mock logic, now a private method."""
+        self.audit_logger.log(
+            "AGENT_EXECUTE_SUCCESS",
+            (
+                "Scoring complete for market "
+                f"'{market_id}' using model "
+                f"'{scoring_model_version}'."
+            ),
+        )
+
+        return ScoringOutput(
+            confidence=0.9,
+            scorecard=scorecard,
+        )
+
+    def promote_high_scoring(
+        self,
+        queue: PriorityDealQueue,
+    ) -> List[Dict[str, Any]]:
+        """Promotes high-scoring opportunities into the queue."""
+
         promoted: List[Dict[str, Any]] = []
-        scorecard = self.scorecard.as_dict()
+
+        scorecard = DealScorecard().as_dict()
+
         high_priority = 0
+
+        qualifying_scores = {
+            "opportunity_score",
+            "deal_potential_score",
+            "buyer_demand_score",
+            "market_score",
+        }
+
         for name, value in scorecard.items():
-            if name in {"opportunity_score", "deal_potential_score", "buyer_demand_score", "market_score"} and value >= 70:
+            if name in qualifying_scores and value >= 70:
                 high_priority += 1
 
         entry = {
@@ -103,6 +158,8 @@ class OpportunityScoringEngine(AIAgent):
             "priority": max(0, high_priority * 15),
             "scorecard": scorecard,
         }
+
         queue.push(entry)
         promoted.append(entry)
+
         return promoted

@@ -5,7 +5,7 @@ import secrets
 from dataclasses import dataclass, field
 from enum import Enum
 from uuid import uuid4
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from .db_client import DatabaseClient
 from .phase25 import PendingActionDashboard
@@ -225,7 +225,10 @@ class AuthenticationService:
             incoming_hash, _ = self._hash_password(password, salt)
 
             if secrets.compare_digest(stored_hash, incoming_hash):
-                return User(**user_data)
+                # Reconstruct the User object from the dictionary
+                return User(user_id=user_data["user_id"], organization_id=user_data["organization_id"],
+                            email=user_data["email"], hashed_password=user_data["hashed_password"],
+                            role=user_data["role"])
         except (ValueError, TypeError):
             return None  # Handle malformed password storage
         return None

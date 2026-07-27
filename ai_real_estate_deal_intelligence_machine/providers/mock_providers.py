@@ -7,6 +7,10 @@ from ..phase24 import DataSourceType
 
 
 class MockPropertyProvider(DataProvider):
+    def __init__(self):
+        super().__init__()
+        self.record = self.get_config()
+
     def get_config(self) -> ProviderConfig:
         return ProviderConfig(
             name="mock_property_feed",
@@ -28,6 +32,10 @@ class MockPropertyProvider(DataProvider):
 
 
 class MockMarketProvider(DataProvider):
+    def __init__(self):
+        super().__init__()
+        self.record = self.get_config()
+
     def get_config(self) -> ProviderConfig:
         return ProviderConfig(
             name="mock_market_feed",
@@ -47,6 +55,10 @@ class MockMarketProvider(DataProvider):
 
 
 class MockBuyerProvider(DataProvider):
+    def __init__(self):
+        super().__init__()
+        self.record = self.get_config()
+
     def get_config(self) -> ProviderConfig:
         return ProviderConfig(
             name="mock_buyer_feed",
@@ -67,6 +79,10 @@ class MockBuyerProvider(DataProvider):
 
 class MockAttomProvider(DataProvider):
     """Mock provider for ATTOM data, used for fallback and testing."""
+
+    def __init__(self):
+        super().__init__()
+        self.record = self.get_config()
 
     def get_config(self) -> ProviderConfig:
         return ProviderConfig(

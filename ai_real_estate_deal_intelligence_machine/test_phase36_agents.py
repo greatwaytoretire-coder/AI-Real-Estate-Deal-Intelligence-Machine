@@ -1,14 +1,15 @@
 import unittest
 from pathlib import Path
+from typing import Dict, Any, Callable
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
 from ai_real_estate_deal_intelligence_machine.phase8 import (
     DealRiskAgent,
     DealRiskAgentInput,
-    DealRiskAgentOutput,
 )
+from ai_real_estate_deal_intelligence_machine.agents.base import AgentInput, AgentOutput
 from ai_real_estate_deal_intelligence_machine.jobs.base import Job
-from ai_real_estate_deal_intelligence_machine.phase36 import AgentContract, AgentOrchestrator
+from ai_real_estate_deal_intelligence_machine.phase36 import AgentContract, AgentOrchestrator, AgentWorkflow
 
 
 class Phase36AgentContractTest(unittest.TestCase):
@@ -33,7 +34,7 @@ class Phase36AgentContractTest(unittest.TestCase):
         agent_input = DealRiskAgentInput(correlation_id="corr-123", deal_id="deal-abc")
         agent_output = agent.execute(agent_input)
 
-        self.assertIsInstance(agent_output, DealRiskAgentOutput)
+        self.assertIsInstance(agent_output, AgentOutput)
         self.assertIsNone(agent_output.error)
         self.assertGreater(agent_output.confidence, 0.8)
         self.assertIsNotNone(agent_output.assessment)
@@ -46,14 +47,25 @@ class Phase36AgentContractTest(unittest.TestCase):
         orchestrator = AgentOrchestrator(audit_logger=self.audit_logger)
         risk_agent = DealRiskAgent(audit_logger=self.audit_logger)
 
-        # Register the agent to handle a specific event type
-        orchestrator.register_agent("PROPERTY_DISCOVERED", risk_agent)
+        # Define the input factory for the agent
+        def risk_agent_factory(job: Job) -> DealRiskAgentInput:
+            return DealRiskAgentInput(
+                correlation_id=job.job_id,
+                deal_id=job.payload.get("deal_id"),
+            )
+
+        # Register a workflow with the agent and its factory
+        workflow = AgentWorkflow(
+            name="Test Risk Workflow",
+            steps=[risk_agent],
+            input_factories={"DealRiskAgent": risk_agent_factory},
+        )
+        orchestrator.register_workflow("PROPERTY_DISCOVERED", workflow)
 
         # Create a job that should be handled by the risk agent
         job = Job(job_id="job-risk-01", payload={"event_type": "PROPERTY_DISCOVERED", "deal_id": "deal-abc"})
         output = orchestrator.handle_job(job)
 
-        self.assertIsInstance(output, DealRiskAgentOutput)
         self.assertIsNone(output.error)
         self.assertEqual(output.assessment.risk_score, 72)
 
@@ -61,4 +73,4 @@ class Phase36AgentContractTest(unittest.TestCase):
         bad_job = Job(job_id="job-bad-01", payload={"event_type": "UNKNOWN_EVENT"})
         bad_output = orchestrator.handle_job(bad_job)
         self.assertIsNotNone(bad_output.error)
-        self.assertIn("No agent registered", bad_output.error)
+        self.assertIn("No workflow registered", bad_output.error)

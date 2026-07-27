@@ -27,7 +27,7 @@ class MarketConfig:
 
     market_id: str
     market_name: str
-    status: MarketStatus = MarketStatus.ACTIVE
+    status: MarketStatus = MarketStatus.PAUSED
 
     # Market-specific settings
     data_providers: List[str] = field(default_factory=list)
@@ -37,6 +37,8 @@ class MarketConfig:
     # Budget and usage limits
     monthly_budget: float = 1000.0  # Default budget
     api_call_limit: int = 10000
+
+
 
 
 class ScalingManager:

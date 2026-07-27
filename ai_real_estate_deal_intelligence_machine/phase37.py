@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
 from .phase29 import ScalingManager
-from .phase30 import ContinuousRuntime
+from .runtime.base import IngestionRunner
 
 
 @dataclass
@@ -22,7 +22,7 @@ class MultiMarketOrchestrator:
     Phase 37: Safely orchestrates processing across multiple configured markets.
     """
 
-    def __init__(self, scaling_manager: ScalingManager, runtime: ContinuousRuntime):
+    def __init__(self, scaling_manager: ScalingManager, runtime: IngestionRunner):
         self.scaling_manager = scaling_manager
         self.runtime = runtime
 

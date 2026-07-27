@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
 from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
@@ -12,6 +13,7 @@ from ai_real_estate_deal_intelligence_machine.phase32 import (
     LivePilotConfig,
     LivePilotRunner,
 )
+from ai_real_estate_deal_intelligence_machine.phase29 import ScalingManager
 
 
 class Phase32LivePilotTest(unittest.TestCase):
@@ -20,7 +22,12 @@ class Phase32LivePilotTest(unittest.TestCase):
         self.log_path.unlink(missing_ok=True)
         self.audit_logger = AuditLogger(log_path=self.log_path)
         provider_manager = ProviderManager(audit_logger=self.audit_logger)
-        self.runtime = ContinuousRuntime(audit_logger=self.audit_logger, provider_manager=provider_manager)
+        self.runtime = ContinuousRuntime(
+            audit_logger=self.audit_logger,
+            provider_manager=provider_manager,
+            orchestrator=MagicMock(),
+            scaling_manager=ScalingManager(),
+        )
 
     def tearDown(self):
         self.log_path.unlink(missing_ok=True)

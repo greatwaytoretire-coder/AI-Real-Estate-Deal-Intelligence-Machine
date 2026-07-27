@@ -1,0 +1,163 @@
+[1mdiff --git a/ai_real_estate_deal_intelligence_machine/__init__.py b/ai_real_estate_deal_intelligence_machine/__init__.py[m
+[1mindex fbe1332..6c43ea2 100644[m
+[1m--- a/ai_real_estate_deal_intelligence_machine/__init__.py[m
+[1m+++ b/ai_real_estate_deal_intelligence_machine/__init__.py[m
+[36m@@ -1,5 +1 @@[m
+[31m-from __future__ import annotations[m
+[31m-[m
+[31m-from .base import Job, JobStatus[m
+[31m-[m
+[31m-__all__ = ["Job", "JobStatus"][m
+\ No newline at end of file[m
+[32m+[m[32mfrom __future__ import annotations[m
+\ No newline at end of file[m
+[1mdiff --git a/ai_real_estate_deal_intelligence_machine/base.py b/ai_real_estate_deal_intelligence_machine/base.py[m
+[1mindex c9cf4de..e69de29 100644[m
+[1m--- a/ai_real_estate_deal_intelligence_machine/base.py[m
+[1m+++ b/ai_real_estate_deal_intelligence_machine/base.py[m
+[36m@@ -1,28 +0,0 @@[m
+[31m-from __future__ import annotations[m
+[31m-[m
+[31m-from dataclasses import dataclass, field[m
+[31m-from enum import Enum[m
+[31m-from typing import Any, Dict[m
+[31m-[m
+[31m-[m
+[31m-class JobStatus(str, Enum):[m
+[31m-    """Lifecycle of a job in the runtime queue."""[m
+[31m-[m
+[31m-    PENDING = "PENDING"[m
+[31m-    RUNNING = "RUNNING"[m
+[31m-    COMPLETED = "COMPLETED"[m
+[31m-    FAILED = "FAILED"[m
+[31m-    RETRY_SCHEDULED = "RETRY_SCHEDULED"[m
+[31m-    DEAD_LETTER = "DEAD_LETTER"[m
+[31m-[m
+[31m-[m
+[31m-@dataclass[m
+[31m-class Job:[m
+[31m-    """A durable, trackable unit of work for the system."""[m
+[31m-[m
+[31m-    # Fields from original ReliabilityJob[m
+[31m-    job_id: str[m
+[31m-    payload: Dict[str, Any][m
+[31m-    attempts: int = 0[m
+[31m-    # Field for extended status tracking[m
+[31m-    status: JobStatus = JobStatus.PENDING[m
+\ No newline at end of file[m
+[1mdiff --git a/ai_real_estate_deal_intelligence_machine/config.py b/ai_real_estate_deal_intelligence_machine/config.py[m
+[1mindex ee4a49d..c0769c6 100644[m
+[1m--- a/ai_real_estate_deal_intelligence_machine/config.py[m
+[1m+++ b/ai_real_estate_deal_intelligence_machine/config.py[m
+[36m@@ -18,6 +18,7 @@[m [mclass Settings:[m
+     autonomy_mode: str = os.getenv("AUTONOMY_MODE", "supervised")[m
+     database_url: str = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")[m
+     audit_log_path: str = os.getenv("AUDIT_LOG_PATH", str(AUDIT_LOG_PATH))[m
+[32m+[m[32m    stale_job_timeout_seconds: int = int(os.getenv("STALE_JOB_TIMEOUT_SECONDS", "3600"))[m
+ [m
+ # Create a single instance of the settings[m
+ settings = Settings()[m
+[1mdiff --git a/ai_real_estate_deal_intelligence_machine/db_client.py b/ai_real_estate_deal_intelligence_machine/db_client.py[m
+[1mindex 2b4abc4..b7467c1 100644[m
+[1m--- a/ai_real_estate_deal_intelligence_machine/db_client.py[m
+[1m+++ b/ai_real_estate_deal_intelligence_machine/db_client.py[m
+[36m@@ -3,9 +3,11 @@[m [mfrom __future__ import annotations[m
+ import json[m
+ import sqlite3[m
+ from pathlib import Path[m
+[32m+[m[32mfrom datetime import datetime, timedelta, timezone[m
+ from typing import Any, Dict, List, Optional[m
+ [m
+ from .config import DB_PATH, DATA_DIR[m
+[32m+[m[32mfrom .jobs.base import Job, JobStatus[m
+ [m
+ [m
+ class DatabaseClient:[m
+[36m@@ -84,6 +86,27 @@[m [mclass DatabaseClient:[m
+             version INTEGER NOT NULL[m
+         );[m
+         INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 1);[m
+[32m+[m
+[32m+[m[32m        CREATE TABLE IF NOT EXISTS jobs ([m
+[32m+[m[32m            job_id TEXT PRIMARY KEY,[m
+[32m+[m[32m            status TEXT NOT NULL,[m
+[32m+[m[32m            attempts INTEGER NOT NULL DEFAULT 0,[m
+[32m+[m[32m            payload TEXT NOT NULL,[m
+[32m+[m[32m            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);[m
+[32m+[m
+[32m+[m[32m        CREATE TABLE IF NOT EXISTS processed_fingerprints ([m
+[32m+[m[32m            fingerprint TEXT NOT NULL,[m
+[32m+[m[32m            market_id TEXT NOT NULL,[m
+[32m+[m[32m            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m            PRIMARY KEY (fingerprint, market_id)[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        -- Placeholder for future schema versions[m
+[32m+[m[32m        -- INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 2);[m
+         """[m
+         with self._connection:[m
+             self._connection.executescript(schema)[m
+[36m@@ -140,5 +163,105 @@[m [mclass DatabaseClient:[m
+             rows.append({"id": row["id"], "stage": row["stage"], "payload": payload, "created_at": row["created_at"]})[m
+         return rows[m
+ [m
+[32m+[m[32m    def create_job(self, job: Job) -> None:[m
+[32m+[m[32m        """Creates a new job record in the database."""[m
+[32m+[m[32m        with self._connection:[m
+[32m+[m[32m            self._connection.execute([m
+[32m+[m[32m                """[m
+[32m+[m[32m                INSERT INTO jobs (job_id, status, attempts, payload, updated_at)[m
+[32m+[m[32m                VALUES (?, ?, ?, ?, ?)[m
+[32m+[m[32m                """,[m
+[32m+[m[32m                ([m
+[32m+[m[32m                    job.job_id,[m
+[32m+[m[32m                    job.status.value,[m
+[32m+[m[32m                    job.attempts,[m
+[32m+[m[32m                    json.dumps(job.payload),[m
+[32m+[m[32m                    datetime.utcnow().isoformat(),[m
+[32m+[m[32m                ),[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m    def update_job_status(self, job_id: str, status: JobStatus, attempts: Optional[int] = None) -> None:[m
+[32m+[m[32m        """Updates the status and optionally the attempts count of a job."""[m
+[32m+[m[32m        with self._connection:[m
+[32m+[m[32m            if attempts is not None:[m
+[32m+[m[32m                self._connection.execute([m
+[32m+[m[32m                    "UPDATE jobs SET status = ?, attempts = ?, updated_at = ? WHERE job_id = ?",[m
+[32m+[m[32m                    (status.value, attempts, datetime.utcnow().isoformat(), job_id),[m
+[32m+[m[32m                )[m
+[32m+[m[32m            else:[m
+[32m+[m[32m                self._connection.execute([m
+[32m+[m[32m                    "UPDATE jobs SET status = ?, updated_at = ? WHERE job_id = ?",[m
+[32m+[m[32m                    (status.value, datetime.utcnow().isoformat(), job_id),[m
+[32m+[m[32m                )[m
+[32m+[m
+[32m+[m[32m    def get_pending_job_id(self) -> Optional[str]:[m
+[32m+[m[32m        """Retrieves the ID of the oldest pending or retry-scheduled job."""[m
+[32m+[m[32m        cursor = self._connection.execute([m
+[32m+[m[32m            "SELECT job_id FROM jobs WHERE status IN (?, ?) ORDER BY created_at ASC LIMIT 1",[m
+[32m+[m[32m            (JobStatus.PENDING.value, JobStatus.RETRY_SCHEDULED.value),[m
+[32m+[m[32m        )[m
+[32m+[m[32m        row = cursor.fetchone()[m
+[32m+[m[32m        return row["job_id"] if row else None[m
+[32m+[m
+[32m+[m[32m    def get_job(self, job_id: str) -> Optional[Job]:[m
+[32m+[m[32m        """Retrieves a single job by its ID and reconstructs the Job object."""[m
+[32m+[m[32m        cursor = self._connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,))[m
+[32m+[m[32m        row = cursor.fetchone()[m
+[32m+[m[32m        if not row:[m
+[32m+[m[32m            return None[m
+[32m+[m[32m        return Job([m
+[32m+[m[32m            job_id=row["job_id"],[m
+[32m+[m[32m            status=JobStatus(row["status"]),[m
+[32m+[m[32m            attempts=row["attempts"],[m
+[32m+[m[32m            payload=json.loads(row["payload"]),[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m    def list_jobs_by_status(self, status: JobStatus) -> List[Job]:[m
+[32m+[m[32m        """Lists all jobs with a given status."""[m
+[32m+[m[32m        cursor = self._connection.execute

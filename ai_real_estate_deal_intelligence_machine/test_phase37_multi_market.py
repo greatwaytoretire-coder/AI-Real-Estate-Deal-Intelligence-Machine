@@ -1,11 +1,13 @@
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger
 from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
 from ai_real_estate_deal_intelligence_machine.phase29 import MarketConfig, MarketStatus, ScalingManager
 from ai_real_estate_deal_intelligence_machine.phase30 import ContinuousRuntime, OperatingMode
 from ai_real_estate_deal_intelligence_machine.phase36 import AgentOrchestrator
+from ai_real_estate_deal_intelligence_machine.phase37 import MultiMarketOrchestrator
 
 
 class Phase37MultiMarketTest(unittest.TestCase):
@@ -15,8 +17,6 @@ class Phase37MultiMarketTest(unittest.TestCase):
         self.audit_logger = AuditLogger(log_path=self.log_path)
 
         # Initialize all components needed for the runtime
-        self.provider_manager = ProviderManager(audit_logger=self.audit_logger)
-        self.orchestrator = AgentOrchestrator(audit_logger=self.audit_logger)
         self.scaling_manager = ScalingManager()
 
         # Configure two markets
@@ -37,18 +37,20 @@ class Phase37MultiMarketTest(unittest.TestCase):
             )
         )
 
-        self.runtime = ContinuousRuntime(self.audit_logger, self.provider_manager, self.orchestrator, self.scaling_manager)
-        self.runtime.mode = OperatingMode.PILOT
+        # For testing MultiMarketOrchestrator, we only need a component that satisfies the IngestionRunner protocol.
+        # We can use a mock instead of a full ContinuousRuntime.
+        self.mock_runtime = MagicMock()
 
-    def test_ingestion_respects_market_configuration(self):
-        """PHASE 37: Verify ingestion runs only for active markets and their specified providers."""
-        # Run ingestion for the active market (Austin)
-        run_log_atx = self.runtime.run_ingestion_for_market("atx", {"query": "test"})
-        self.assertEqual(run_log_atx.records_inserted, 1)
-        self.assertEqual(len(self.runtime.job_queue.pending_queue), 1)
+    def test_multi_market_orchestrator_runs_active_markets(self):
+        """PHASE 37: Verify the orchestrator runs ingestion only for active markets."""
+        orchestrator = MultiMarketOrchestrator(self.scaling_manager, self.mock_runtime)
 
-        # Attempt to run ingestion for the paused market (Dallas)
-        run_log_dfw = self.runtime.run_ingestion_for_market("dfw", {"query": "test"})
-        self.assertEqual(run_log_dfw.records_inserted, 0)
-        self.assertIn("is not active or does not exist", run_log_dfw.errors[0])
-        self.assertEqual(len(self.runtime.job_queue.pending_queue), 1) # No new job created
+        # Run the orchestrator
+        report = orchestrator.run_all_active_markets({})
+
+        # Verify the report
+        self.assertIn("atx", report.markets_processed)
+        self.assertNotIn("dfw", report.markets_processed) # Should not be processed because it's PAUSED
+
+        # Verify that run_ingestion_for_market was called once for the active market
+        self.mock_runtime.run_ingestion_for_market.assert_called_once_with("atx", {})

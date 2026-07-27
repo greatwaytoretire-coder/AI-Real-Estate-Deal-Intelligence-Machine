@@ -1,26 +1,63 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Union
-from .agents.base import AgentContract, AgentInput, AgentOutput, AIAgent
+from typing import Any, Dict, Optional
+from typing import List
 from .audit_logger import AuditLogger
-from .jobs.base import Job
+from .phase30 import Job
 
 
 @dataclass
-class WorkflowStep:
-    """Represents a single step in a workflow, pairing an agent with its input factory."""
+class AgentContract:
+    """A standardized contract defining an AI agent's purpose and capabilities."""
 
-    agent: AIAgent
-    input_factory: Callable[[Job], AgentInput]
+    agent_name: str
+    purpose: str
+    version: str = "1.0.0"
+    input_schema: Dict[str, Any] = field(default_factory=dict)
+    output_schema: Dict[str, Any] = field(default_factory=dict)
+    audit_requirements: str = "All inputs, outputs, and errors must be logged."
+
+
+@dataclass
+class AgentInput:
+    """Base class for agent inputs, providing a correlation ID for tracking."""
+
+    correlation_id: str
+    market_id: Optional[str] = None
+
+
+@dataclass
+class AgentOutput:
+    """Base class for agent outputs, including confidence and error handling."""
+
+    confidence: float = 0.0
+    error: Optional[str] = None
+
+
+class AIAgent(ABC):
+    """An abstract base class for all AI agents, enforcing a standard contract."""
+
+    def __init__(self, audit_logger: AuditLogger):
+        self.audit_logger = audit_logger
+
+    @abstractmethod
+    def get_contract(self) -> AgentContract:
+        """Returns the agent's standardized contract."""
+        pass
+
+    @abstractmethod
+    def execute(self, agent_input: AgentInput) -> AgentOutput:
+        """Executes the agent's mission."""
+        pass
 
 
 @dataclass
 class AgentWorkflow:
     """Defines a sequence of agents to execute for a given workflow."""
     name: str
-    steps: List[Union[AIAgent, WorkflowStep]]
-    input_factories: Dict[str, Callable[[Job], AgentInput]] = field(default_factory=dict)
+    steps: List[AIAgent]
 
 
 class AgentOrchestrator:
@@ -51,25 +88,11 @@ class AgentOrchestrator:
 
         market_id = job.payload.get("market_id")
         last_output: AgentOutput = AgentOutput()
-        for step in workflow.steps:
-            if isinstance(step, WorkflowStep):
-                # Handle the older WorkflowStep wrapper object
-                agent = step.agent
-                factory = step.input_factory
-            else:
-                # Handle the newer direct AIAgent instance
-                agent = step
-                agent_name = agent.get_contract().agent_name
-                factory = workflow.input_factories.get(agent_name)
-
-            if factory:
-                agent_input = factory(job)
-            else:
-                # Fallback for workflows without explicit factories
-                agent_input = AgentInput(correlation_id=job.job_id, market_id=market_id)
-
+        for agent in workflow.steps:
+            # In a real system, the output of one agent would be mapped to the input of the next.
+            # For this simulation, we just execute them in sequence.
+            agent_input = AgentInput(correlation_id=job.job_id, market_id=market_id)
             last_output = agent.execute(agent_input)
-
             if last_output.error:
                 self.audit_logger.log("ORCHESTRATOR_WORKFLOW_FAIL", f"Workflow '{workflow.name}' failed at step '{agent.get_contract().agent_name}'.")
                 return last_output

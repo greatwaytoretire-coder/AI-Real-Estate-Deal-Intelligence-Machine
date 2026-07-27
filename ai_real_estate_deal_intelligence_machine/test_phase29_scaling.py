@@ -1,7 +1,6 @@
 import unittest
 
-from ai_real_estate_deal_intelligence_machine.phase29 import MarketConfig, ScalingManager
-
+from ai_real_estate_deal_intelligence_machine.phase29 import MarketConfig, MarketStatus, ScalingManager
 
 class Phase29ScalingArchitectureTest(unittest.TestCase):
     def test_multi_market_configuration_and_controls(self):
@@ -16,13 +15,14 @@ class Phase29ScalingArchitectureTest(unittest.TestCase):
             market_id="atx",
             market_name="Austin, TX",
             data_providers=["attom_api", "mls_feed_atx"],
+            status=MarketStatus.ACTIVE,
             monthly_budget=500.0,
         )
         config_dallas = MarketConfig(
             market_id="dfw",
             market_name="Dallas, TX",
             data_providers=["attom_api", "mls_feed_dfw"],
-            is_enabled=False,  # Dallas is initially disabled
+            status=MarketStatus.PAUSED,  # Dallas is initially disabled
         )
 
         manager.load_market_config(config_austin)
@@ -43,7 +43,7 @@ class Phase29ScalingArchitectureTest(unittest.TestCase):
         # 4. Enable the second market and verify it becomes active
         dallas_config = manager.get_market_config("dfw")
         self.assertIsNotNone(dallas_config)
-        dallas_config.is_enabled = True
+        dallas_config.status = MarketStatus.ACTIVE  # Set status directly
         manager.load_market_config(dallas_config)
 
         active_markets_after_update = manager.get_active_markets()

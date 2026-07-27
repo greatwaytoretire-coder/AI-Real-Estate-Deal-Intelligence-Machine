@@ -42,7 +42,7 @@ class Phase33DataModelTest(unittest.TestCase):
         validation = ValidationResult(prediction=prediction, outcome=outcome)
 
         # ARV Variance: (250k - 260k) / 260k = -3.84%
-        self.assertAlmostEqual(validation.arv_variance_percent, -3.84, places=2)
+        self.assertAlmostEqual(validation.arv_variance_percent, -3.84615, places=5)
 
         # Profit Variance: (30k - 45k) / 45k = -33.33%
         self.assertAlmostEqual(validation.profit_variance_percent, -33.33, places=2)

@@ -53,7 +53,12 @@ class BuyerRankedMatch:
 class BuyerMatchingEngine:
     """Phase 10 buyer matching foundation for ranking and outreach opportunities."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, buyer_database: Optional[List[Dict[str, Any]]] = None
+    ) -> None:
+        if buyer_database is not None:
+            self._buyer_database = list(buyer_database)
+            return
         self._buyer_database: List[Dict[str, Any]] = [
             {
                 "buyer_id": "buyer-0001",

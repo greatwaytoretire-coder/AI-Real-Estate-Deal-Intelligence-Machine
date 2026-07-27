@@ -110,7 +110,7 @@ class DealValidationEngine:
         report.underwriting_accuracy = (correct_underwriting / report.opportunities_reviewed) * 100
         report.buyer_matching_accuracy = (correct_matches / report.opportunities_reviewed) * 100
 
-        if report.overvalued_properties > report.opportunities_reviewed / 2:
+        if report.overvalued_properties >= report.opportunities_reviewed / 2 and report.opportunities_reviewed > 0:
             report.major_error_patterns.append("System tends to overvalue properties.")
             report.recommended_improvements.append("Review ARV model for upward bias.")
 

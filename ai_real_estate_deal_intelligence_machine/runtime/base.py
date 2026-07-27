@@ -21,6 +21,10 @@ class IngestionRun:
 class IngestionRunner(Protocol):
     """Defines the interface for running ingestion for a market."""
 
-    def run_ingestion_for_market(self, market_id: str, query: Dict[str, Any]) -> IngestionRun:
+    def run_ingestion_for_market(
+        self,
+        market_id: str,
+        query: Dict[str, Any],
+    ) -> IngestionRun:
         """Runs a full ingestion cycle for a specific market."""
         ...

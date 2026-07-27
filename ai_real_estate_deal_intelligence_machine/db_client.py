@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from .config import DB_PATH, DATA_DIR
+from .jobs.base import Job, JobStatus
 
 
 class DatabaseClient:
@@ -34,7 +36,7 @@ class DatabaseClient:
 
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            organization_id TEXT NOT NULL,
+            organization_id TEXT,
             event_type TEXT NOT NULL,
             details TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -84,9 +86,40 @@ class DatabaseClient:
             version INTEGER NOT NULL
         );
         INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 1);
+
+        CREATE TABLE IF NOT EXISTS jobs (
+            job_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            payload TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);
+
+        CREATE TABLE IF NOT EXISTS processed_fingerprints (
+            fingerprint TEXT NOT NULL,
+            market_id TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (fingerprint, market_id)
+        );
+
+        -- Placeholder for future schema versions
+        -- INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 2);
         """
         with self._connection:
             self._connection.executescript(schema)
+            self._run_migrations()
+
+    def _run_migrations(self):
+        """Applies simple, non-destructive schema migrations."""
+        cursor = self._connection.execute("PRAGMA table_info(audit_logs)")
+        columns = [row["name"] for row in cursor.fetchall()]
+
+        if "organization_id" not in columns:
+            self._connection.execute("ALTER TABLE audit_logs ADD COLUMN organization_id TEXT")
+
 
     def upsert_provider(self, name: str, label: str, source_type: str = "mock") -> None:
         with self._connection:
@@ -108,17 +141,19 @@ class DatabaseClient:
         )
         return [dict(row) for row in cursor.fetchall()]
 
-    def log_audit(self, organization_id: str, event_type: str, details: str) -> None:
+    def log_audit(self, event_type: str, details: str, organization_id: str | None = None) -> None:
         with self._connection:
             self._connection.execute(
                 "INSERT INTO audit_logs (organization_id, event_type, details) VALUES (?, ?, ?)",
-                (organization_id, event_type, details),
+                (organization_id or "system", event_type, details),
             )
 
-    def list_audit_logs(self, organization_id: str) -> List[Dict[str, Any]]:
+    def list_audit_logs(self, organization_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        # If organization_id is provided, filter by it. Otherwise, return all logs.
+        # The `(?1 IS NULL OR organization_id = ?1)` pattern handles this.
         cursor = self._connection.execute(
-            "SELECT id, event_type, details, created_at FROM audit_logs WHERE organization_id = ? ORDER BY id",
-            (organization_id,),
+            "SELECT id, event_type, details, created_at, organization_id FROM audit_logs WHERE (?1 IS NULL OR organization_id = ?1) ORDER BY id",
+            (organization_id, ),
         )
         return [dict(row) for row in cursor.fetchall()]
 
@@ -140,5 +175,138 @@ class DatabaseClient:
             rows.append({"id": row["id"], "stage": row["stage"], "payload": payload, "created_at": row["created_at"]})
         return rows
 
+    def create_job(self, job: Job) -> None:
+        """Creates a new job record in the database."""
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT INTO jobs (job_id, status, attempts, payload, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    job.job_id,
+                    job.status.value,
+                    job.attempts,
+                    json.dumps(job.payload),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+
+    def update_job_status(self, job_id: str, status: JobStatus, attempts: Optional[int] = None) -> None:
+        """Updates the status and optionally the attempts count of a job."""
+        with self._connection:
+            if attempts is not None:
+                self._connection.execute(
+                    "UPDATE jobs SET status = ?, attempts = ?, updated_at = ? WHERE job_id = ?",
+                    (status.value, attempts, datetime.now(timezone.utc).isoformat(), job_id),
+                )
+            else:
+                self._connection.execute(
+                    "UPDATE jobs SET status = ?, updated_at = ? WHERE job_id = ?",
+                    (status.value, datetime.now(timezone.utc).isoformat(), job_id),
+                )
+
+    def get_pending_job_id(self) -> Optional[str]:
+        """Retrieves the ID of the oldest pending or retry-scheduled job."""
+        cursor = self._connection.execute(
+            "SELECT job_id FROM jobs WHERE status IN (?, ?) ORDER BY created_at ASC LIMIT 1",
+            (JobStatus.PENDING.value, JobStatus.RETRY_SCHEDULED.value),
+        )
+        row = cursor.fetchone()
+        return row["job_id"] if row else None
+
+    def get_job(self, job_id: str) -> Optional[Job]:
+        """Retrieves a single job by its ID and reconstructs the Job object."""
+        cursor = self._connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return Job(
+            job_id=row["job_id"],
+            status=JobStatus(row["status"]),
+            attempts=row["attempts"],
+            payload=json.loads(row["payload"]),
+        )
+
+    def list_jobs_by_status(self, status: JobStatus) -> List[Job]:
+        """Lists all jobs with a given status."""
+        cursor = self._connection.execute("SELECT * FROM jobs WHERE status = ?", (status.value,))
+        return [
+            Job(
+                job_id=row["job_id"],
+                status=JobStatus(row["status"]),
+                attempts=row["attempts"],
+                payload=json.loads(row["payload"]),
+            )
+            for row in cursor.fetchall()
+        ]
+
+    def add_fingerprint(self, fingerprint: str, market_id: str) -> None:
+        """Adds a deduplication fingerprint to the database."""
+        with self._connection:
+            self._connection.execute(
+                "INSERT OR IGNORE INTO processed_fingerprints (fingerprint, market_id) VALUES (?, ?)",
+                (fingerprint, market_id),
+            )
+
+    def has_fingerprint(self, fingerprint: str, market_id: str) -> bool:
+        """Checks if a deduplication fingerprint exists."""
+        cursor = self._connection.execute(
+            "SELECT 1 FROM processed_fingerprints WHERE fingerprint = ? AND market_id = ?",
+            (fingerprint, market_id),
+        )
+        return cursor.fetchone() is not None
+
+    def recover_stale_running_jobs(self, stale_after_seconds: int) -> int:
+        """
+        Finds jobs stuck in the RUNNING state for too long and moves them
+        to RETRY_SCHEDULED so they can be re-processed.
+        """
+        stale_threshold = datetime.now(timezone.utc) - timedelta(
+            seconds=stale_after_seconds
+        )
+
+        with self._connection:
+            cursor = self._connection.execute(
+                """
+                UPDATE jobs
+                SET status = ?, updated_at = ?
+                WHERE status = ? AND updated_at < ?
+                """,
+                (
+                    JobStatus.RETRY_SCHEDULED.value,
+                    datetime.now(timezone.utc).isoformat(),
+                    JobStatus.RUNNING.value,
+                    stale_threshold.isoformat(),
+                ),
+            )
+            return cursor.rowcount
+
+    def create_user(self, user: Any) -> None:
+        """Creates a new user record."""
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT INTO users (user_id, organization_id, email, hashed_password, role)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (user.user_id, user.organization_id, user.email, user.hashed_password, user.role),
+            )
+
+    def find_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Finds a user by their email address."""
+        cursor = self._connection.execute(
+            "SELECT user_id, organization_id, email, hashed_password, role FROM users WHERE email = ?",
+            (email,),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
     def close(self) -> None:
         self._connection.close()
+
+    def __enter__(self) -> "DatabaseClient":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()

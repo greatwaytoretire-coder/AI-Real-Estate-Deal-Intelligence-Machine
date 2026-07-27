@@ -20,14 +20,11 @@ class Phase0FoundationTests(unittest.TestCase):
         self.assertTrue(all(provider["source_type"] == "mock" for provider in providers))
 
     def test_database_client_can_initialize_and_store_audit_rows(self):
-        client = DatabaseClient()
-        try:
+        with DatabaseClient() as client:
             client.upsert_provider("mock_property_feed", "Mock Property Feed", "mock")
             client.log_audit("NEW_PROPERTY_DISCOVERED", "Phase 0 provider bootstrap")
             audit_logs = client.list_audit_logs()
             self.assertGreaterEqual(len(audit_logs), 1)
-        finally:
-            client.close()
 
     def test_audit_logger_writes_traceable_log_entries(self):
         logger = AuditLogger()

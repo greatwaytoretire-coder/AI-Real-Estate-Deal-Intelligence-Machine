@@ -18,6 +18,7 @@ class Settings:
     autonomy_mode: str = os.getenv("AUTONOMY_MODE", "supervised")
     database_url: str = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
     audit_log_path: str = os.getenv("AUDIT_LOG_PATH", str(AUDIT_LOG_PATH))
+    STALE_JOB_TIMEOUT_SECONDS: int = int(os.getenv("STALE_JOB_TIMEOUT_SECONDS", "3600"))
 
 # Create a single instance of the settings
 settings = Settings()
