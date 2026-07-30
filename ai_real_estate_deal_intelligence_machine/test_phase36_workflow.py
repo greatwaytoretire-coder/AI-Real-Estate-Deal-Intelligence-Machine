@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from ai_real_estate_deal_intelligence_machine.audit_logger import AuditLogger

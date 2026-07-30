@@ -20,6 +20,7 @@ from ai_real_estate_deal_intelligence_machine.phase30 import (
 class Phase31LiveDataIntegrationTest(unittest.TestCase):
 
     def setUp(self):
+
         self.log_path = Path(
             "data/test_phase31_audit.log"
         )
@@ -50,7 +51,9 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
 
         self.scaling_manager = ScalingManager()
 
+
     def tearDown(self):
+
         os.environ.pop(
             "ATTOM_API_KEY",
             None,
@@ -60,7 +63,9 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
             missing_ok=True
         )
 
+
     def create_runtime(self):
+
         return ContinuousRuntime(
             audit_logger=self.audit_logger,
             provider_manager=self.provider_manager,
@@ -70,7 +75,9 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
             deduplication_engine=DeduplicationEngine(),
         )
 
+
     def load_test_market(self):
+
         market_config = MarketConfig(
             market_id="test_market",
             market_name="Test Market",
@@ -82,7 +89,9 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
             market_config
         )
 
+
     def test_end_to_end_ingestion_with_mock_fallback(self):
+
         runtime = self.create_runtime()
 
         runtime.mode = OperatingMode.PILOT
@@ -104,9 +113,16 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
             1,
         )
 
+
     def test_end_to_end_ingestion_with_live_provider(self):
+
         os.environ["ATTOM_API_KEY"] = (
             "test-key-is-set"
+        )
+
+        # Recreate provider manager after API key exists
+        self.provider_manager = ProviderManager(
+            audit_logger=self.audit_logger
         )
 
         runtime = self.create_runtime()
@@ -130,9 +146,16 @@ class Phase31LiveDataIntegrationTest(unittest.TestCase):
             1,
         )
 
+
     def test_live_provider_is_blocked_in_mock_mode(self):
+
         os.environ["ATTOM_API_KEY"] = (
             "test-key-is-set"
+        )
+
+        # Recreate provider manager after API key exists
+        self.provider_manager = ProviderManager(
+            audit_logger=self.audit_logger
         )
 
         runtime = self.create_runtime()

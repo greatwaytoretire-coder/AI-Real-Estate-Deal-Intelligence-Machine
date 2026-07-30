@@ -9,6 +9,7 @@ from ai_real_estate_deal_intelligence_machine.phase26 import ProviderManager
 from ai_real_estate_deal_intelligence_machine.phase29 import (
     MarketConfig,
     ScalingManager,
+    MarketStatus,
 )
 
 
@@ -25,7 +26,7 @@ class Phase30ProductionRuntimeTest(unittest.TestCase):
 
         # Configure a test market
         self.scaling_manager.load_market_config(
-            MarketConfig(market_id="test_market", market_name="Test Market", data_providers=["mock_provider_a"])
+            MarketConfig(market_id="test_market", market_name="Test Market", status=MarketStatus.ACTIVE, data_providers=["mock_provider_a"])
         )
 
         self.runtime = ContinuousRuntime(self.audit_logger, self.provider_manager, self.orchestrator, self.scaling_manager)
@@ -79,14 +80,17 @@ class Phase30ProductionRuntimeTest(unittest.TestCase):
         # 4. Have a worker process a job that fails
         # The next job in the queue will be for "456 Oak Ave"
         failing_job_id = self.runtime.job_queue.pending_queue[0]
-        self.runtime.worker.run(failure_simulation=True)
+
+        # Exhaust retries so the job moves to dead-letter queue
+        for _ in range(self.runtime.reliability_engine.max_retries):
+         self.runtime.worker.run(failure_simulation=True)
 
         # Verify it was moved to the dead-letter queue
         self.assertEqual(len(self.runtime.job_queue.pending_queue), 0)
         self.assertEqual(len(self.runtime.job_queue.dead_letter_queue), 1)
         failed_job = self.runtime.job_queue.dead_letter_queue[0]
         self.assertEqual(failed_job.job_id, failing_job_id)
-        self.assertEqual(failed_job.status, JobStatus.FAILED)
+        self.assertEqual(failed_job.status, JobStatus.DEAD_LETTER)
 
         # 5. Verify audit logs were created
         with self.log_path.open("r") as f:

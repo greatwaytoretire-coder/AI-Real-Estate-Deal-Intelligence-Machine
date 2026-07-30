@@ -86,7 +86,15 @@ def create_production_services() -> Dict[str, Any]:
 
     # Return all components for the main function or tests to use
     # Note: db_client is not returned as it's encapsulated by the persistent components.
-    return {"runtime": runtime, "multi_market_orchestrator": multi_market_orchestrator, "audit_logger": audit_logger, "db_client": db_client}
+    return {
+    "runtime": runtime,
+    "orchestrator": orchestrator,
+    "provider_manager": provider_manager,
+    "scaling_manager": scaling_manager,
+    "multi_market_orchestrator": multi_market_orchestrator,
+    "audit_logger": audit_logger,
+    "db_client": db_client,
+}
 
 
 def main():
