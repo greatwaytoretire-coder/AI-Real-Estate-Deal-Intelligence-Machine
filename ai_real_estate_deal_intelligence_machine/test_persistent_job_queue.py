@@ -1,7 +1,7 @@
 import sqlite3
 import unittest
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from .db_client import DatabaseClient
 from .jobs.base import Job, JobStatus
@@ -160,7 +160,7 @@ class PersistentJobRecoveryTest(unittest.TestCase):
 
     def _make_job_stale(self, job_id: str):
         """Helper to manually set a job's updated_at timestamp to be old."""
-        stale_timestamp = (datetime.utcnow() - timedelta(seconds=self.stale_timeout + 60)).isoformat()
+        stale_timestamp = (datetime.now(UTC) - timedelta(seconds=self.stale_timeout + 60)).isoformat()
         with self.db_client._connection as conn:
             conn.execute("UPDATE jobs SET updated_at = ? WHERE job_id = ?", (stale_timestamp, job_id))
 
