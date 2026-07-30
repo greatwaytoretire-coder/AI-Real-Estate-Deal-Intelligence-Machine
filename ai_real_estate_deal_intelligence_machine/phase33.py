@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional
 from uuid import uuid4
 
@@ -14,11 +14,12 @@ class AIPrediction:
 
     prediction_id: str = field(default_factory=lambda: f"pred_{uuid4()}")
     deal_id: str = ""
-    prediction_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    prediction_timestamp: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat()
+    )
     model_version: str = "1.0.0"
     data_source: str = "unknown"
 
-    # Key Predictions
     deal_score: float = 0.0
     confidence: float = 0.0
     risk_score: float = 0.0
@@ -38,36 +39,40 @@ class ActualOutcome:
 
     outcome_id: str = field(default_factory=lambda: f"out_{uuid4()}")
     deal_id: str = ""
-    deal_outcome: str = "UNKNOWN"  # e.g., 'CLOSED', 'FAILED', 'PASSED'
+    deal_outcome: str = "UNKNOWN"
 
-    # Actual Financials
     actual_purchase_price: float = 0.0
     actual_repair_costs: float = 0.0
     actual_holding_costs: float = 0.0
     actual_selling_costs: float = 0.0
     actual_sale_price: float = 0.0
 
-    # Performance Metrics
     days_to_sell: int = 0
-    buyer_interest_level: float = 0.0  # e.g., number of inquiries or a scored value
+    buyer_interest_level: float = 0.0
     actual_buyer_id: Optional[str] = None
 
     @property
     def actual_roi(self) -> float:
         """Calculates the actual return on investment."""
+
         if self.actual_purchase_price == 0:
             return 0.0
-        return (self.actual_profit / self.actual_purchase_price) * 100
+
+        return (
+            self.actual_profit / self.actual_purchase_price
+        ) * 100
 
     @property
     def actual_profit(self) -> float:
         """Calculates the actual profit from the outcome."""
+
         total_costs = (
             self.actual_purchase_price
             + self.actual_repair_costs
             + self.actual_holding_costs
             + self.actual_selling_costs
         )
+
         return self.actual_sale_price - total_costs
 
 
@@ -80,35 +85,53 @@ class ValidationResult:
 
     @property
     def arv_variance_percent(self) -> float:
+
         if self.outcome.actual_sale_price == 0:
             return 0.0
+
         return (
-            (self.prediction.estimated_arv - self.outcome.actual_sale_price)
+            (
+                self.prediction.estimated_arv
+                - self.outcome.actual_sale_price
+            )
             / self.outcome.actual_sale_price
         ) * 100
 
     @property
     def profit_variance_percent(self) -> float:
+
         if self.outcome.actual_profit == 0:
             return 0.0
+
         return (
-            (self.prediction.estimated_profit - self.outcome.actual_profit)
+            (
+                self.prediction.estimated_profit
+                - self.outcome.actual_profit
+            )
             / self.outcome.actual_profit
         ) * 100
 
-    def classify(self, field_name: str, tolerance_percent: float = 10.0) -> str:
-        """Classifies a prediction field as Accurate, Overestimated, or Underestimated."""
+    def classify(
+        self,
+        field_name: str,
+        tolerance_percent: float = 10.0,
+    ) -> str:
+
         if field_name == "arv":
             variance = self.arv_variance_percent
+
         elif field_name == "profit":
             variance = self.profit_variance_percent
+
         else:
             return "Insufficient data"
 
         if abs(variance) <= tolerance_percent:
             return "Accurate"
+
         elif variance > 0:
             return "Overestimated"
+
         else:
             return "Underestimated"
 
@@ -118,13 +141,11 @@ class ValidationMetrics:
     """Aggregates validation metrics across a dataset of deals."""
 
     deals_validated: int = 0
-    data_reliability: str = "No data"  # No data, Insufficient data, Preliminary, Reliable
+    data_reliability: str = "No data"
 
-    # Average Errors
     avg_arv_variance_percent: float = 0.0
     avg_profit_variance_percent: float = 0.0
 
-    # Error Rates
     false_positive_rate: float = 0.0
     false_negative_rate: float = 0.0
     deal_conversion_rate: float = 0.0
@@ -132,38 +153,55 @@ class ValidationMetrics:
 
 
 class ValidationManager:
-    """Manages the storage, comparison, and validation of predictions vs. outcomes."""
+    """Manages storage and validation of predictions vs outcomes."""
 
     def __init__(self):
         self.predictions: Dict[str, AIPrediction] = {}
         self.outcomes: Dict[str, ActualOutcome] = {}
         self.learning_records: List[LearningRecord] = []
 
-    def record_prediction(self, prediction: AIPrediction):
-        """Stores an AI prediction for a given deal."""
+    def record_prediction(
+        self,
+        prediction: AIPrediction,
+    ):
         self.predictions[prediction.deal_id] = prediction
 
-    def record_outcome(self, outcome: ActualOutcome):
-        """Stores a verified real-world outcome for a given deal."""
+    def record_outcome(
+        self,
+        outcome: ActualOutcome,
+    ):
         self.outcomes[outcome.deal_id] = outcome
 
-    def generate_validation(self, deal_id: str) -> Optional[ValidationResult]:
-        """Generates a comparison object if both prediction and outcome exist."""
+    def generate_validation(
+        self,
+        deal_id: str,
+    ) -> Optional[ValidationResult]:
+
         prediction = self.predictions.get(deal_id)
         outcome = self.outcomes.get(deal_id)
 
         if not prediction or not outcome:
             return None
 
-        return ValidationResult(prediction=prediction, outcome=outcome)
+        return ValidationResult(
+            prediction=prediction,
+            outcome=outcome,
+        )
 
-    def create_learning_record(self, deal_id: str) -> Optional[LearningRecord]:
-        """Creates a learning record from a completed validation."""
+    def create_learning_record(
+        self,
+        deal_id: str,
+    ) -> Optional[LearningRecord]:
+
         validation = self.generate_validation(deal_id)
+
         if not validation:
             return None
 
-        insight = f"ARV was {validation.classify('arv')}, Profit was {validation.classify('profit')}."
+        insight = (
+            f"ARV was {validation.classify('arv')}, "
+            f"Profit was {validation.classify('profit')}."
+        )
 
         record = LearningRecord(
             deal_id=deal_id,
@@ -172,7 +210,9 @@ class ValidationManager:
             insight=insight,
             model_version=validation.prediction.model_version,
         )
+
         self.learning_records.append(record)
+
         return record
 
     def generate_metrics(
@@ -181,12 +221,22 @@ class ValidationManager:
         profit_threshold: float = 10000.0,
         min_sample_size: int = 10,
     ) -> ValidationMetrics:
-        """Generates aggregate validation metrics across all completed deals."""
+
         metrics = ValidationMetrics()
-        validations = [self.generate_validation(deal_id) for deal_id in self.outcomes]
-        completed_validations = [v for v in validations if v is not None]
+
+        validations = [
+            self.generate_validation(deal_id)
+            for deal_id in self.outcomes
+        ]
+
+        completed_validations = [
+            validation
+            for validation in validations
+            if validation is not None
+        ]
 
         metrics.deals_validated = len(completed_validations)
+
         if metrics.deals_validated == 0:
             return metrics
 
@@ -202,38 +252,65 @@ class ValidationManager:
         closed_deals = 0
         successful_matches = 0
 
-        for v in completed_validations:
-            total_arv_variance += v.arv_variance_percent
-            total_profit_variance += v.profit_variance_percent
+        for validation in completed_validations:
 
-            # False positive: AI predicted a good deal, but it was bad.
-            if v.prediction.deal_score >= deal_score_threshold and v.outcome.actual_profit < profit_threshold:
+            total_arv_variance += validation.arv_variance_percent
+            total_profit_variance += validation.profit_variance_percent
+
+            if (
+                validation.prediction.deal_score >= deal_score_threshold
+                and validation.outcome.actual_profit < profit_threshold
+            ):
                 false_positives += 1
 
-            # False negative: AI predicted a bad deal, but it was good.
-            if v.prediction.deal_score < deal_score_threshold and v.outcome.actual_profit >= profit_threshold:
+            if (
+                validation.prediction.deal_score < deal_score_threshold
+                and validation.outcome.actual_profit >= profit_threshold
+            ):
                 false_negatives += 1
 
-            if v.outcome.deal_outcome == "CLOSED":
+            if validation.outcome.deal_outcome == "CLOSED":
+
                 closed_deals += 1
-                # A match is successful if the predicted buyer is the one who actually closed the deal.
-                if v.prediction.top_buyer_match_id and v.prediction.top_buyer_match_id == v.outcome.actual_buyer_id:
+
+                if (
+                    validation.prediction.top_buyer_match_id
+                    and validation.prediction.top_buyer_match_id
+                    == validation.outcome.actual_buyer_id
+                ):
                     successful_matches += 1
 
-        metrics.avg_arv_variance_percent = total_arv_variance / metrics.deals_validated
-        metrics.avg_profit_variance_percent = total_profit_variance / metrics.deals_validated
-        metrics.false_positive_rate = (false_positives / metrics.deals_validated) * 100
-        metrics.false_negative_rate = (false_negatives / metrics.deals_validated) * 100
-        metrics.deal_conversion_rate = (closed_deals / metrics.deals_validated) * 100
+        metrics.avg_arv_variance_percent = (
+            total_arv_variance / metrics.deals_validated
+        )
+
+        metrics.avg_profit_variance_percent = (
+            total_profit_variance / metrics.deals_validated
+        )
+
+        metrics.false_positive_rate = (
+            false_positives / metrics.deals_validated
+        ) * 100
+
+        metrics.false_negative_rate = (
+            false_negatives / metrics.deals_validated
+        ) * 100
+
+        metrics.deal_conversion_rate = (
+            closed_deals / metrics.deals_validated
+        ) * 100
+
         if closed_deals > 0:
-            metrics.buyer_match_success_rate = (successful_matches / closed_deals) * 100
+            metrics.buyer_match_success_rate = (
+                successful_matches / closed_deals
+            ) * 100
 
         return metrics
 
 
 @dataclass
 class LearningRecord:
-    """A record capturing a specific insight learned from a validation result."""
+    """A record capturing a specific insight from validation."""
 
     learning_id: str = field(default_factory=lambda: f"learn_{uuid4()}")
     deal_id: str = ""
@@ -242,4 +319,6 @@ class LearningRecord:
     insight: str = ""
     model_version: str = ""
     model_update_recommendation: str = ""
-    created_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_timestamp: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat()
+    )

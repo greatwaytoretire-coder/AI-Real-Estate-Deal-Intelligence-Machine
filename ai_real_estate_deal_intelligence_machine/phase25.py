@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, List
 from uuid import uuid4
@@ -48,11 +48,24 @@ class ActionForApproval:
 
     def __post_init__(self):
         if not self.audit_history:
-            self._add_audit_entry(self.status, "Action created.")
+            self._add_audit_entry(
+                self.status,
+                "Action created.",
+            )
 
-    def _add_audit_entry(self, status: ApprovalStatus, notes: str, operator_id: str = "system"):
+    def _add_audit_entry(
+        self,
+        status: ApprovalStatus,
+        notes: str,
+        operator_id: str = "system",
+    ):
         self.audit_history.append(
-            AuditEntry(timestamp=datetime.utcnow().isoformat(), status=status, notes=notes, operator_id=operator_id)
+            AuditEntry(
+                timestamp=datetime.now(UTC).isoformat(),
+                status=status,
+                notes=notes,
+                operator_id=operator_id,
+            )
         )
 
 
@@ -65,51 +78,151 @@ class HumanInTheLoopEngine:
 
     def submit_for_approval(self, action: ActionForApproval):
         """Submits a new action to the approval queue."""
+
         action.status = ApprovalStatus.PENDING_REVIEW
-        action._add_audit_entry(ApprovalStatus.PENDING_REVIEW, "Submitted for human review.")
+
+        action._add_audit_entry(
+            ApprovalStatus.PENDING_REVIEW,
+            "Submitted for human review.",
+        )
+
         self.approval_queue.append(action)
-        self.audit_logger.log("APPROVAL_WORKFLOW", f"Action {action.action_id} submitted for review.")
 
-    def _find_action(self, action_id: str) -> ActionForApproval | None:
-        return next((a for a in self.approval_queue if a.action_id == action_id), None)
+        self.audit_logger.log(
+            "APPROVAL_WORKFLOW",
+            f"Action {action.action_id} submitted for review.",
+        )
 
-    def approve(self, action_id: str, operator_id: str, notes: str = "Approved by operator."):
+    def _find_action(
+        self,
+        action_id: str,
+    ) -> ActionForApproval | None:
+
+        return next(
+            (
+                action
+                for action in self.approval_queue
+                if action.action_id == action_id
+            ),
+            None,
+        )
+
+    def approve(
+        self,
+        action_id: str,
+        operator_id: str,
+        notes: str = "Approved by operator.",
+    ):
+
         action = self._find_action(action_id)
+
         if action and action.status == ApprovalStatus.PENDING_REVIEW:
             action.status = ApprovalStatus.APPROVED
-            action._add_audit_entry(ApprovalStatus.APPROVED, notes, operator_id)
-            self.audit_logger.log("APPROVAL_WORKFLOW", f"Action {action_id} approved by {operator_id}.")
-            # In a real system, this would trigger an execution workflow
+
+            action._add_audit_entry(
+                ApprovalStatus.APPROVED,
+                notes,
+                operator_id,
+            )
+
+            self.audit_logger.log(
+                "APPROVAL_WORKFLOW",
+                f"Action {action_id} approved by {operator_id}.",
+            )
+
             return True
+
         return False
 
-    def reject(self, action_id: str, operator_id: str, notes: str = "Rejected by operator."):
+    def reject(
+        self,
+        action_id: str,
+        operator_id: str,
+        notes: str = "Rejected by operator.",
+    ):
+
         action = self._find_action(action_id)
+
         if action and action.status == ApprovalStatus.PENDING_REVIEW:
             action.status = ApprovalStatus.REJECTED
-            action._add_audit_entry(ApprovalStatus.REJECTED, notes, operator_id)
-            self.audit_logger.log("APPROVAL_WORKFLOW", f"Action {action_id} rejected by {operator_id}.")
+
+            action._add_audit_entry(
+                ApprovalStatus.REJECTED,
+                notes,
+                operator_id,
+            )
+
+            self.audit_logger.log(
+                "APPROVAL_WORKFLOW",
+                f"Action {action_id} rejected by {operator_id}.",
+            )
+
             return True
+
         return False
 
-    def edit(self, action_id: str, operator_id: str, new_payload: Dict[str, Any]):
+    def edit(
+        self,
+        action_id: str,
+        operator_id: str,
+        new_payload: Dict[str, Any],
+    ):
+
         action = self._find_action(action_id)
+
         if action and action.status == ApprovalStatus.PENDING_REVIEW:
             action.action_payload = new_payload
-            action._add_audit_entry(ApprovalStatus.DRAFT, "Action edited by operator.", operator_id)
-            action.status = ApprovalStatus.PENDING_REVIEW  # Must be re-reviewed
-            action._add_audit_entry(ApprovalStatus.PENDING_REVIEW, "Resubmitted after edit.")
-            self.audit_logger.log("APPROVAL_WORKFLOW", f"Action {action_id} edited by {operator_id}.")
+
+            action._add_audit_entry(
+                ApprovalStatus.DRAFT,
+                "Action edited by operator.",
+                operator_id,
+            )
+
+            action.status = ApprovalStatus.PENDING_REVIEW
+
+            action._add_audit_entry(
+                ApprovalStatus.PENDING_REVIEW,
+                "Resubmitted after edit.",
+            )
+
+            self.audit_logger.log(
+                "APPROVAL_WORKFLOW",
+                f"Action {action_id} edited by {operator_id}.",
+            )
+
             return True
+
         return False
 
-    def cancel(self, action_id: str, operator_id: str, notes: str = "Cancelled by operator."):
+    def cancel(
+        self,
+        action_id: str,
+        operator_id: str,
+        notes: str = "Cancelled by operator.",
+    ):
+
         action = self._find_action(action_id)
-        if action and action.status in [ApprovalStatus.DRAFT, ApprovalStatus.PENDING_REVIEW]:
+
+        if action and action.status in [
+            ApprovalStatus.DRAFT,
+            ApprovalStatus.PENDING_REVIEW,
+        ]:
             action.status = ApprovalStatus.CANCELLED
-            action._add_audit_entry(ApprovalStatus.CANCELLED, notes, operator_id)
-            self.audit_logger.log("APPROVAL_WORKFLOW", f"Action {action_id} cancelled by {operator_id}.")
+
+            action._add_audit_entry(
+                ApprovalStatus.CANCELLED,
+                notes,
+                operator_id,
+            )
+
+            self.audit_logger.log(
+                "APPROVAL_WORKFLOW",
+                f"Action {action_id} cancelled by {operator_id}.",
+            )
+
             return True
+
         return False
 
 
@@ -121,7 +234,13 @@ class PendingActionDashboard:
 
     def generate_report(self) -> List[Dict[str, Any]]:
         """Returns a list of actions pending review."""
-        pending_actions = [a for a in self.engine.approval_queue if a.status == ApprovalStatus.PENDING_REVIEW]
+
+        pending_actions = [
+            action
+            for action in self.engine.approval_queue
+            if action.status == ApprovalStatus.PENDING_REVIEW
+        ]
+
         return [
             {
                 "action_id": action.action_id,

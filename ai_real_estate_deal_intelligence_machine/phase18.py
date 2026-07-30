@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List
+from datetime import datetime, UTC
+from typing import Any, Dict
 
 
 @dataclass
@@ -17,7 +17,8 @@ class GuardrailDecision:
 
     def as_dict(self) -> Dict[str, Any]:
         if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
+
         return {
             "agent": self.agent,
             "trigger": self.trigger,
@@ -41,7 +42,8 @@ class ComplianceAuditTrail:
 
     def as_dict(self) -> Dict[str, Any]:
         if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
+
         return {
             "agent": self.agent,
             "trigger": self.trigger,
@@ -65,7 +67,9 @@ class ComplianceGuardrailAgent:
         action: str,
         result: str,
     ) -> Dict[str, Any]:
+
         allowed = decision != "block"
+
         trail = ComplianceAuditTrail(
             agent=agent_name,
             trigger=trigger,
@@ -74,6 +78,7 @@ class ComplianceGuardrailAgent:
             action=action,
             result=result,
         )
+
         return {
             "allowed": allowed,
             "decision": decision,
