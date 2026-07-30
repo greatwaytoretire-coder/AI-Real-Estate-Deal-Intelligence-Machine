@@ -25,4 +25,5 @@ build/
 
 *.log
 
-.DS_Store 
+.DS_Store
+project_structure.txt 
