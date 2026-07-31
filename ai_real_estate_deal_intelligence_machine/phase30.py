@@ -356,14 +356,15 @@ class Worker:
 class ContinuousRuntime:
 
     def __init__(
-        self,
-        audit_logger: AuditLogger,
-        provider_manager: ProviderManager,
-        orchestrator: Any,
-        scaling_manager: ScalingManager,
-        job_queue: Optional[RuntimeJobQueue] = None,
-        deduplication_engine: Optional[DeduplicationEngine] = None,
-    ) -> None:
+    self,
+    audit_logger: AuditLogger,
+    provider_manager: ProviderManager,
+    orchestrator: Any,
+    scaling_manager: ScalingManager,
+    job_queue: Optional[RuntimeJobQueue] = None,
+    deduplication_engine: Optional[DeduplicationEngine] = None,
+    db_client: Optional[Any] = None,
+) -> None:
 
 
         self.mode = OperatingMode.DEVELOPMENT
@@ -372,6 +373,7 @@ class ContinuousRuntime:
         self.provider_manager = provider_manager
         self.orchestrator = orchestrator
         self.scaling_manager = scaling_manager
+        self.db_client = db_client
 
 
         self.system_state = SystemState(
@@ -457,8 +459,10 @@ class ContinuousRuntime:
             provider = self.provider_manager.providers.get(
                 provider_name
             )
-            print(type(provider))
-            print(provider.get_config())
+            self.audit_logger.log(
+    "PROVIDER_ACTIVE",
+    str(provider.get_config())
+)
 
             if provider is None:
 
@@ -546,14 +550,36 @@ class ContinuousRuntime:
                     self.raw_data_store.append(
                         record
                     )
+                    if self.db_client:
+                     self.db_client.upsert_property(
+        {
+            "canonical_id": normalized.canonical_id,
+            "market_id": market_id,
+            "address": getattr(normalized, "address", None),
+            "city": getattr(normalized, "city", None),
+            "state": getattr(normalized, "state", None),
+            "zip_code": getattr(normalized, "zip_code", None),
+            "property_type": getattr(normalized, "property_type", None),
+            "bedrooms": getattr(normalized, "bedrooms", None),
+            "bathrooms": getattr(normalized, "bathrooms", None),
+            "square_feet": getattr(normalized, "square_feet", None),
+            "estimated_value": getattr(normalized, "estimated_value", None),
+            "source": getattr(normalized, "source", "phase30"),
+        }
+    )
 
                     job = Job(
-                        job_id=f"job_{uuid4()}",
-                        payload={
-                            "event_type": "PROPERTY_DISCOVERED",
-                            "property_id": normalized.canonical_id,
-                        },
-                    )
+    job_id=f"job_{uuid4()}",
+    payload={
+        "event_type": "PROPERTY_DISCOVERED",
+        "property_id": normalized.canonical_id,
+        "market_id": market_id,
+        "entity_id": normalized.canonical_id,
+        "scoring_model_version": (
+            market_config.scoring_model_version
+        ),
+    },
+)
 
                     self.job_queue.submit_job(
                         job

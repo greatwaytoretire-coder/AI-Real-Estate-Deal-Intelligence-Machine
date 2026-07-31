@@ -9,7 +9,7 @@ from .phase37 import MultiMarketOrchestrator
 
 class SystemSupervisor:
     """
-    Top-level supervisor for continuous AI Deal Machine operation.
+    Top-level supervisor controlling continuous AI Deal Machine operation.
     """
 
     def __init__(
@@ -18,20 +18,19 @@ class SystemSupervisor:
         runtime: ContinuousRuntime,
         audit_logger: LoggingProtocol,
         poll_interval: int = 60,
-    ):
+    ) -> None:
+
         self.multi_market_orchestrator = multi_market_orchestrator
         self.runtime = runtime
         self.audit_logger = audit_logger
         self.poll_interval = poll_interval
         self._stop_event = Event()
 
-    def run_single_cycle(self):
-        """
-        Runs one ingestion + processing cycle.
-        """
 
-        if self._stop_event.is_set() and self.runtime.job_queue is None:
-            return
+    def run_single_cycle(self) -> None:
+        """
+        Executes one complete supervisor cycle.
+        """
 
         self.audit_logger.log(
             "SUPERVISOR_CYCLE_START",
@@ -39,12 +38,25 @@ class SystemSupervisor:
         )
 
         try:
-            self.multi_market_orchestrator.run_all_active_markets({})
+            report = (
+                self.multi_market_orchestrator
+                .run_all_active_markets({})
+            )
 
             self.audit_logger.log(
                 "SUPERVISOR_INGESTION_COMPLETE",
-                "Market ingestion phase complete.",
+                f"Markets processed: {report.markets_processed}",
             )
+
+            pending_jobs = len(
+                self.runtime.job_queue.pending_queue
+            )
+
+            self.audit_logger.log(
+                "SUPERVISOR_QUEUE_STATUS",
+                f"Pending jobs: {pending_jobs}",
+            )
+
 
             while (
                 self.runtime.job_queue.pending_queue
@@ -52,20 +64,26 @@ class SystemSupervisor:
             ):
                 self.runtime.worker.run()
 
+
             self.audit_logger.log(
                 "SUPERVISOR_CYCLE_COMPLETE",
                 "Job processing phase complete.",
             )
 
-        except Exception as e:
+
+        except Exception as exc:
+
             self.audit_logger.log(
                 "SUPERVISOR_ERROR",
-                f"An unhandled error occurred in the main loop: {e}",
+                str(exc),
             )
 
-    def run_continuously(self):
+            raise
+
+
+    def run_continuously(self) -> None:
         """
-        Runs the main continuous supervisor loop.
+        Runs the supervisor continuously until shutdown is requested.
         """
 
         self.audit_logger.log(
@@ -73,37 +91,44 @@ class SystemSupervisor:
             "System Supervisor starting continuous operation.",
         )
 
-        while True:
+
+        while not self._stop_event.is_set():
+
             try:
                 self.run_single_cycle()
 
-                if self._stop_event.is_set():
-                    break
 
-                self.audit_logger.log(
-                    "SUPERVISOR_SLEEP",
-                    f"Cycle finished. Sleeping for {self.poll_interval} seconds.",
-                )
+            except Exception as exc:
 
-                self._stop_event.wait(
-                    self.poll_interval
-                )
-
-            except Exception as e:
                 self.audit_logger.log(
                     "SUPERVISOR_ERROR",
-                    f"An unhandled error occurred in the main loop: {e}",
+                    f"An unhandled error occurred in the main loop: {exc}",
                 )
+
+
+            if self._stop_event.is_set():
                 break
 
-    def stop(self):
+
+            self.audit_logger.log(
+                "SUPERVISOR_SLEEP",
+                f"Sleeping {self.poll_interval} seconds.",
+            )
+
+
+            self._stop_event.wait(
+                self.poll_interval
+            )
+
+
+    def stop(self) -> None:
         """
-        Signals the supervisor to stop gracefully.
+        Requests the supervisor to shut down.
         """
 
         self.audit_logger.log(
             "SUPERVISOR_STOP",
-            "Stop signal received. Shutting down after current cycle.",
+            "Shutdown requested.",
         )
 
         self._stop_event.set()
