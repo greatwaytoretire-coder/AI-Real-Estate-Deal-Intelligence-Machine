@@ -26,4 +26,5 @@ build/
 *.log
 
 .DS_Store
-project_structure.txt 
+project_structure.txt
+*.egg-info/ 
