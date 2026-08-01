@@ -12,13 +12,23 @@ class DealService:
         self.repository = repository
 
 
-    def analyze_deal(
+    def create_deal(
         self,
-        deal,
+        deal_data: dict,
     ):
 
-        saved_deal = self.repository.save_deal(
-            deal
+        return self.repository.create_deal(
+            deal_data
+        )
+
+
+    def analyze_deal(
+        self,
+        deal_data: dict,
+    ):
+
+        saved_deal = self.repository.create_deal(
+            deal_data
         )
 
         return {
@@ -29,9 +39,14 @@ class DealService:
 
     def get_deal(
         self,
-        deal_id: str,
+        property_id: str,
     ):
 
         return self.repository.get_deal(
-            deal_id
+            property_id
         )
+
+
+    def list_deals(self):
+
+        return self.repository.list_deals()
