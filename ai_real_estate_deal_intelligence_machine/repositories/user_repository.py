@@ -1,19 +1,37 @@
-from typing import Dict, Optional
+from sqlalchemy.orm import Session
+
+from ai_real_estate_deal_intelligence_machine.models.user import UserModel
 
 
 class UserRepository:
-    """
-    Temporary in-memory user repository.
 
-    This will later be replaced with the production database implementation.
-    """
+    def __init__(self, db: Session):
+        self.db = db
 
-    def __init__(self):
-        self.users: Dict[str, dict] = {}
+    def create_user(
+        self,
+        user_data: dict,
+    ):
+        user = UserModel(
+            email=user_data["email"],
+            hashed_password=user_data["hashed_password"],
+            role=user_data.get("role", "investor"),
+        )
 
-    def create_user(self, user: dict) -> dict:
-        self.users[user["email"]] = user
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+
         return user
 
-    def get_by_email(self, email: str) -> Optional[dict]:
-        return self.users.get(email)
+    def get_by_email(
+        self,
+        email: str,
+    ):
+        return (
+            self.db.query(UserModel)
+            .filter(
+                UserModel.email == email
+            )
+            .first()
+        )

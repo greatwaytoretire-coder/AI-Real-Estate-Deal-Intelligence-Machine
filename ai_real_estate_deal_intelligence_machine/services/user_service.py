@@ -22,17 +22,17 @@ class UserService:
         email: str,
         password: str,
         role: str = "investor",
-    ) -> dict:
+    ):
 
         hashed_password = hash_password(password)
 
-        user = {
-            "email": email,
-            "hashed_password": hashed_password,
-            "role": role,
-        }
-
-        return self.repository.create_user(user)
+        return self.repository.create_user(
+            {
+                "email": email,
+                "hashed_password": hashed_password,
+                "role": role,
+            }
+        )
 
 
     def authenticate_user(
@@ -46,10 +46,12 @@ class UserService:
         if not user:
             return None
 
+
         if not verify_password(
             password,
-            user["hashed_password"],
+            user.hashed_password,
         ):
             return None
+
 
         return user

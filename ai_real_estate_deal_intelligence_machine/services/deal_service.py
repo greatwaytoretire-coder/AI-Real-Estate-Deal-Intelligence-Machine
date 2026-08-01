@@ -5,12 +5,17 @@ from ai_real_estate_deal_intelligence_machine.repositories.deal_repository impor
 
 class DealService:
 
-    def __init__(self):
+    def __init__(
+        self,
+        repository: DealRepository,
+    ):
+        self.repository = repository
 
-        self.repository = DealRepository()
 
-
-    def analyze_deal(self, deal):
+    def analyze_deal(
+        self,
+        deal,
+    ):
 
         saved_deal = self.repository.save_deal(
             deal
@@ -18,11 +23,14 @@ class DealService:
 
         return {
             "deal": saved_deal,
-            "analysis_status": "completed"
+            "analysis_status": "completed",
         }
 
 
-    def get_deal(self, deal_id):
+    def get_deal(
+        self,
+        deal_id: str,
+    ):
 
         return self.repository.get_deal(
             deal_id

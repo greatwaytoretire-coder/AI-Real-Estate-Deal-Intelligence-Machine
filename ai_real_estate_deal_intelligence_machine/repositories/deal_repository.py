@@ -1,7 +1,10 @@
+from sqlalchemy.orm import Session
+
+
 class DealRepository:
 
-    def __init__(self):
-        pass
+    def __init__(self, db: Session):
+        self.db = db
 
 
     def get_deal(self, deal_id: str):
@@ -9,7 +12,7 @@ class DealRepository:
         return {
             "property_id": deal_id,
             "address": "123 Example Street",
-            "status": "discovered"
+            "status": "discovered",
         }
 
 
@@ -17,5 +20,5 @@ class DealRepository:
 
         return {
             "saved": True,
-            "deal": deal
+            "deal": deal,
         }
