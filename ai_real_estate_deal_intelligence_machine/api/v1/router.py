@@ -7,6 +7,7 @@ from .routes import (
     recommendations,
     workflows,
     pipelines,
+    intelligence_packages,
 )
 
 
@@ -42,4 +43,9 @@ api_router.include_router(
 
 api_router.include_router(
     pipelines.router
+)
+
+
+api_router.include_router(
+    intelligence_packages.router
 )
