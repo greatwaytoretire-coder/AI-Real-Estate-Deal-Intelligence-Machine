@@ -10,6 +10,7 @@ from .routes import (
     intelligence_packages,
     investor_reports,
     deal_packages,
+    buyer_matches,
 )
 
 
@@ -60,4 +61,9 @@ api_router.include_router(
 
 api_router.include_router(
     deal_packages.router
+)
+
+
+api_router.include_router(
+    buyer_matches.router
 )
