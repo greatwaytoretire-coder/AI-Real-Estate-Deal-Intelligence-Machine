@@ -11,6 +11,7 @@ from .routes import (
     investor_reports,
     deal_packages,
     buyer_matches,
+    buyer_outreach,
 )
 
 
@@ -66,4 +67,9 @@ api_router.include_router(
 
 api_router.include_router(
     buyer_matches.router
+)
+
+
+api_router.include_router(
+    buyer_outreach.router
 )
