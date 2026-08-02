@@ -1,6 +1,11 @@
 from fastapi import APIRouter
 
-from .routes import health, deals, intelligence
+from .routes import (
+    health,
+    deals,
+    intelligence,
+    recommendations,
+)
 
 
 api_router = APIRouter(
@@ -20,4 +25,9 @@ api_router.include_router(
 
 api_router.include_router(
     intelligence.router
+)
+
+
+api_router.include_router(
+    recommendations.router
 )
