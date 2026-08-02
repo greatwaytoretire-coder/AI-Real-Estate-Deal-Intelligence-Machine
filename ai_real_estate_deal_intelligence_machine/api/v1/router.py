@@ -8,6 +8,8 @@ from .routes import (
     workflows,
     pipelines,
     intelligence_packages,
+    investor_reports,
+    deal_packages,
 )
 
 
@@ -48,4 +50,14 @@ api_router.include_router(
 
 api_router.include_router(
     intelligence_packages.router
+)
+
+
+api_router.include_router(
+    investor_reports.router
+)
+
+
+api_router.include_router(
+    deal_packages.router
 )

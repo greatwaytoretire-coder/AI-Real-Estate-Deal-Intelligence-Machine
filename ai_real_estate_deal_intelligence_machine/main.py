@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from fastapi import FastAPI
+
 from .config import settings
 from .audit_logger import AuditLogger
 from .db_client import DatabaseClient
@@ -44,16 +46,25 @@ from .persistent_job_queue import (
 
 from .supervisor import SystemSupervisor
 
+from .api.v1.router import api_router
+
+
+app = FastAPI(
+    title="AI Real Estate Deal Intelligence Machine",
+    version="1.0.0",
+)
+
+
+app.include_router(
+    api_router
+)
+
 
 def create_production_services() -> Dict[str, Any]:
     """
     Production dependency composition root.
     Creates and wires all application services.
     """
-
-    # --------------------------------------------------
-    # Core infrastructure
-    # --------------------------------------------------
 
     db_client = DatabaseClient()
 
@@ -65,10 +76,6 @@ def create_production_services() -> Dict[str, Any]:
 
     scaling_manager = ScalingManager()
 
-
-    # --------------------------------------------------
-    # Register active markets
-    # --------------------------------------------------
 
     scaling_manager.load_market_config(
         MarketConfig(
@@ -82,10 +89,6 @@ def create_production_services() -> Dict[str, Any]:
     )
 
 
-    # --------------------------------------------------
-    # AI Agent Orchestration
-    # --------------------------------------------------
-
     orchestrator = AgentOrchestrator(
         audit_logger=audit_logger
     )
@@ -95,14 +98,11 @@ def create_production_services() -> Dict[str, Any]:
         audit_logger=audit_logger
     )
 
+
     scoring_agent = OpportunityScoringEngine(
         audit_logger=audit_logger
     )
 
-
-    # --------------------------------------------------
-    # Agent Input Factories
-    # --------------------------------------------------
 
     def risk_agent_factory(
         job: Job
@@ -154,10 +154,6 @@ def create_production_services() -> Dict[str, Any]:
     )
 
 
-    # --------------------------------------------------
-    # Persistent Runtime Components
-    # --------------------------------------------------
-
     persistent_job_queue = PersistentJobQueue(
         db_client=db_client
     )
@@ -188,24 +184,17 @@ def create_production_services() -> Dict[str, Any]:
         )
 
 
-    # --------------------------------------------------
-    # Continuous Runtime
-    # --------------------------------------------------
-
     runtime = ContinuousRuntime(
         audit_logger=audit_logger,
         provider_manager=provider_manager,
         orchestrator=orchestrator,
         scaling_manager=scaling_manager,
         job_queue=persistent_job_queue,
-        deduplication_engine=
-            persistent_deduplication_engine,
+        deduplication_engine=(
+            persistent_deduplication_engine
+        ),
     )
 
-
-    # --------------------------------------------------
-    # Multi Market Supervisor Layer
-    # --------------------------------------------------
 
     multi_market_orchestrator = (
         MultiMarketOrchestrator(
@@ -216,20 +205,14 @@ def create_production_services() -> Dict[str, Any]:
 
 
     return {
-
         "runtime": runtime,
-
         "orchestrator": orchestrator,
-
         "provider_manager": provider_manager,
-
         "scaling_manager": scaling_manager,
-
-        "multi_market_orchestrator":
-            multi_market_orchestrator,
-
+        "multi_market_orchestrator": (
+            multi_market_orchestrator
+        ),
         "audit_logger": audit_logger,
-
         "db_client": db_client,
     }
 
@@ -251,21 +234,21 @@ def main():
 
 
     supervisor = SystemSupervisor(
-
-        multi_market_orchestrator=
+        multi_market_orchestrator=(
             services[
                 "multi_market_orchestrator"
-            ],
-
-        runtime=
+            ]
+        ),
+        runtime=(
             services[
                 "runtime"
-            ],
-
-        audit_logger=
+            ]
+        ),
+        audit_logger=(
             services[
                 "audit_logger"
-            ],
+            ]
+        ),
     )
 
 
