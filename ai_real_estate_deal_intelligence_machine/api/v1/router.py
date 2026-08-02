@@ -5,6 +5,7 @@ from .routes import (
     deals,
     intelligence,
     recommendations,
+    workflows,
 )
 
 
@@ -30,4 +31,9 @@ api_router.include_router(
 
 api_router.include_router(
     recommendations.router
+)
+
+
+api_router.include_router(
+    workflows.router
 )
