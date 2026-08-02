@@ -78,3 +78,20 @@ class RecommendationEngine:
             priority=priority,
             reasoning=reasoning,
         )
+
+
+    def recommend(
+        self,
+        analysis: DealAnalysisResult,
+    ) -> str:
+        """
+        Compatibility method for workflow pipelines.
+
+        Returns only the recommendation decision.
+        """
+
+        result = self.generate(
+            analysis
+        )
+
+        return result.recommendation
