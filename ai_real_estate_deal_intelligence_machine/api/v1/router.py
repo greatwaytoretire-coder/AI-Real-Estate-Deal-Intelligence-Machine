@@ -13,6 +13,8 @@ from .routes import (
     buyer_matches,
     buyer_outreach,
     seller_outreach,
+    seller_leads,
+
 )
 
 
@@ -76,4 +78,7 @@ api_router.include_router(
 )
 api_router.include_router(
     seller_outreach.router
+)
+api_router.include_router(
+    seller_leads.router
 )
