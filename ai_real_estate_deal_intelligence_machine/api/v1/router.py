@@ -23,6 +23,7 @@ from .routes import (
     workflows,
     asset_management,
     portfolio,
+    portfolio_optimization,
 )
 
 
@@ -115,4 +116,7 @@ api_router.include_router(
 )
 api_router.include_router(
     portfolio.router
+)
+api_router.include_router(
+    portfolio_optimization.router
 )
