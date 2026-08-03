@@ -25,6 +25,7 @@ from .routes import (
     portfolio,
     portfolio_optimization,
     tenant_management,
+    maintenance,
 )
 
 
@@ -123,4 +124,7 @@ api_router.include_router(
 )
 api_router.include_router(
     tenant_management.router
+)
+api_router.include_router(
+    maintenance.router
 )
