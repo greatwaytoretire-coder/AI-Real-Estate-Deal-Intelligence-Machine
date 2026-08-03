@@ -22,6 +22,7 @@ from .routes import (
     seller_outreach,
     workflows,
     asset_management,
+    portfolio,
 )
 
 
@@ -111,4 +112,7 @@ api_router.include_router(
 )
 api_router.include_router(
     asset_management.router
+)
+api_router.include_router(
+    portfolio.router
 )
