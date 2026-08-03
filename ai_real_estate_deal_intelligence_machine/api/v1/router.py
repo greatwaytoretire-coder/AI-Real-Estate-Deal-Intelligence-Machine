@@ -16,14 +16,13 @@ from .routes import (
     seller_leads,
     acquisition_workflows,
     acquisition_deals,
+    acquisition_offers,
 )
-
 
 
 api_router = APIRouter(
     prefix="/api/v1"
 )
-
 
 
 api_router.include_router(
@@ -98,4 +97,9 @@ api_router.include_router(
 
 api_router.include_router(
     acquisition_deals.router
+)
+
+
+api_router.include_router(
+    acquisition_offers.router
 )
