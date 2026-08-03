@@ -17,6 +17,7 @@ from .routes import (
     acquisition_workflows,
     acquisition_deals,
     acquisition_offers,
+    negotiations,
 )
 
 
@@ -102,4 +103,7 @@ api_router.include_router(
 
 api_router.include_router(
     acquisition_offers.router
+)
+api_router.include_router(
+    negotiations.router
 )
