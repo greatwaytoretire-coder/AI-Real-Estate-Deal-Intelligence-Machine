@@ -19,6 +19,7 @@ from .routes import (
     seller_leads,
     seller_outreach,
     workflows,
+    due_diligence,
 )
 
 api_router = APIRouter(
@@ -95,4 +96,7 @@ api_router.include_router(
 
 api_router.include_router(
     contracts.router
+)
+api_router.include_router(
+    due_diligence.router
 )
