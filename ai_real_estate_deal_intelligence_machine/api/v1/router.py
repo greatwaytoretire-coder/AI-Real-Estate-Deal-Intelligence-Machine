@@ -7,8 +7,10 @@ from .routes import (
     buyer_matches,
     buyer_outreach,
     contracts,
+    closings,
     deal_packages,
     deals,
+    due_diligence,
     health,
     intelligence,
     intelligence_packages,
@@ -19,12 +21,13 @@ from .routes import (
     seller_leads,
     seller_outreach,
     workflows,
-    due_diligence,
 )
+
 
 api_router = APIRouter(
     prefix="/api/v1"
 )
+
 
 api_router.include_router(
     health.router
@@ -97,6 +100,11 @@ api_router.include_router(
 api_router.include_router(
     contracts.router
 )
+
 api_router.include_router(
     due_diligence.router
+)
+
+api_router.include_router(
+    closings.router
 )
