@@ -14,6 +14,7 @@ from .routes import (
     buyer_outreach,
     seller_outreach,
     seller_leads,
+    acquisition_workflows,
 
 )
 
@@ -81,4 +82,7 @@ api_router.include_router(
 )
 api_router.include_router(
     seller_leads.router
+)
+api_router.include_router(
+    acquisition_workflows.router
 )
