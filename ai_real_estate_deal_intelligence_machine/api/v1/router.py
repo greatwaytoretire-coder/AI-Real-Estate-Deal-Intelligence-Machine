@@ -15,13 +15,15 @@ from .routes import (
     seller_outreach,
     seller_leads,
     acquisition_workflows,
-
+    acquisition_deals,
 )
+
 
 
 api_router = APIRouter(
     prefix="/api/v1"
 )
+
 
 
 api_router.include_router(
@@ -77,12 +79,23 @@ api_router.include_router(
 api_router.include_router(
     buyer_outreach.router
 )
+
+
 api_router.include_router(
     seller_outreach.router
 )
+
+
 api_router.include_router(
     seller_leads.router
 )
+
+
 api_router.include_router(
     acquisition_workflows.router
+)
+
+
+api_router.include_router(
+    acquisition_deals.router
 )
