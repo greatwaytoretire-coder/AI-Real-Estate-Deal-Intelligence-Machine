@@ -29,7 +29,8 @@ from .routes import (
     lease_management,
     inspection_management,
     rent_collection,
-    property_financials, 
+    property_financials,
+    property_management_reports, 
 )
 
 
@@ -151,4 +152,9 @@ api_router.include_router(
     property_financials.router,
     prefix="/property-financials",
     tags=["Property Financials"],
+)
+api_router.include_router(
+    property_management_reports.router,
+    prefix="/property-management-reports",
+    tags=["Property Management Reports"],
 ) 
