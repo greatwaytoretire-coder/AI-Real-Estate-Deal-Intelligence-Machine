@@ -28,7 +28,8 @@ from .routes import (
     maintenance,
     lease_management,
     inspection_management,
-    rent_collection, 
+    rent_collection,
+    property_financials, 
 )
 
 
@@ -145,4 +146,9 @@ api_router.include_router(
     rent_collection.router,
     prefix="/rent-collection",
     tags=["Rent Collection"],
+)
+api_router.include_router(
+    property_financials.router,
+    prefix="/property-financials",
+    tags=["Property Financials"],
 ) 
