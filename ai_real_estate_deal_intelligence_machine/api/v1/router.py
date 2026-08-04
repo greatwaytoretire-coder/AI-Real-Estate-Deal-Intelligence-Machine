@@ -27,6 +27,7 @@ from .routes import (
     tenant_management,
     maintenance,
     lease_management,
+    inspection_management, 
 )
 
 
@@ -133,4 +134,9 @@ api_router.include_router(
     lease_management.router,
     prefix="/lease-management",
     tags=["Lease Management"],
+)
+api_router.include_router(
+    inspection_management.router,
+    prefix="/inspection-management",
+    tags=["Inspection Management"],
 )
