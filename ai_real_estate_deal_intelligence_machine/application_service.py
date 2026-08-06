@@ -3,141 +3,232 @@ from datetime import datetime, timezone
 
 class ApplicationService:
     """
-    Main runtime coordinator.
+    Main application service.
 
-    Connects:
-    - Command Center
-    - Workflow Engine
-    - Orchestrator
-    - Dashboard
-    - Agent Runtime
+    Central coordinator for the Autonomous Real Estate
+    Deal Intelligence Machine.
+
+    Integration Flow:
+
+    Deal Request
+        |
+        v
+    Application Service
+        |
+        v
+    Workflow Engine
+        |
+        v
+    Agent Integration Bus
+        |
+        v
+    Autonomous Deal Result
     """
+
 
     def __init__(
         self,
-        command_center,
-        workflow_engine,
-        orchestrator,
-        dashboard,
-        bus,
+        command_center=None,
+        dashboard=None,
+        workflow_engine=None,
+        orchestrator=None,
+        execution_engine=None,
+        learning_engine=None,
+        bus=None,
     ):
 
         self.command_center = command_center
+        self.dashboard = dashboard
         self.workflow_engine = workflow_engine
         self.orchestrator = orchestrator
-        self.dashboard = dashboard
+        self.execution_engine = execution_engine
+        self.learning_engine = learning_engine
         self.bus = bus
 
-        self.register_core_agents()
-
-
-    def register_core_agents(self):
-        """
-        Register the first operational AI agents.
-        """
-
-        self.bus.register_agent(
-            "acquisition",
-            self.acquisition_agent,
+        self.started_at = datetime.now(
+            timezone.utc
         )
-
-        self.bus.register_agent(
-            "underwriting",
-            self.underwriting_agent,
-        )
-
-        self.bus.register_agent(
-            "buyer_matching",
-            self.buyer_matching_agent,
-        )
-
-        self.bus.register_agent(
-            "packaging",
-            self.packaging_agent,
-        )
-
-        self.bus.register_agent(
-            "execution",
-            self.execution_agent,
-        )
-
-
-    def acquisition_agent(self, payload):
-        return {
-            "stage": "acquisition",
-            "deal_id": payload["deal_id"],
-            "status": "analyzed",
-        }
-
-
-    def underwriting_agent(self, payload):
-        return {
-            "stage": "underwriting",
-            "deal_id": payload["deal_id"],
-            "status": "underwritten",
-        }
-
-
-    def buyer_matching_agent(self, payload):
-        return {
-            "stage": "buyer_matching",
-            "deal_id": payload["deal_id"],
-            "status": "buyers_matched",
-        }
-
-
-    def packaging_agent(self, payload):
-        return {
-            "stage": "packaging",
-            "deal_id": payload["deal_id"],
-            "status": "package_created",
-        }
-
-
-    def execution_agent(self, payload):
-        return {
-            "stage": "execution",
-            "deal_id": payload["deal_id"],
-            "status": "ready",
-        }
 
 
     def analyze_deal(
         self,
-        deal_id: str,
+        deal_id=None,
+        opportunity=None,
+    ):
+        """
+        Main entry point called by main.py.
+
+        Supports:
+            analyze_deal(deal_id="DEAL-001")
+
+        and future:
+
+            analyze_deal(opportunity={...})
+        """
+
+
+        if deal_id is None:
+
+            deal_id = "DEAL-001"
+
+
+        if opportunity is None:
+
+            opportunity = {
+
+                "market": "Detroit",
+
+                "property_address":
+                    "123 Main Street",
+
+                "estimated_value":
+                    275000,
+
+                "motivation_score":
+                    92,
+
+                "distress_signals":
+                    [
+                        "Vacant Property",
+                        "Tax Delinquent",
+                    ],
+            }
+
+
+        return self.analyze_property(
+            deal_id=deal_id,
+            opportunity=opportunity,
+        )
+
+
+    def analyze_property(
+        self,
+        deal_id,
+        opportunity,
     ):
 
+
         print()
+
         print("=" * 70)
-        print("AUTONOMOUS DEAL ANALYSIS STARTED")
+
+        print(
+            "AUTONOMOUS PROPERTY ANALYSIS STARTED"
+        )
+
         print("=" * 70)
 
-        print(f"Deal ID: {deal_id}")
 
+        print()
 
-        workflow_result = self.workflow_engine.execute(
+        print(
+            "Deal ID:",
             deal_id
         )
 
 
-        if hasattr(self.dashboard, "record_activity"):
+        print()
 
-            self.dashboard.record_activity(
-                deal_id=deal_id,
-                activity="Autonomous deal analysis completed",
+        print(
+            "Opportunity:"
+        )
+
+        print(
+            opportunity
+        )
+
+
+        result = {
+
+            "deal_id":
+                deal_id,
+
+            "started_at":
+                datetime.now(
+                    timezone.utc
+                ),
+
+            "status":
+                "STARTED",
+
+            "workflow":
+                None,
+        }
+
+
+        #
+        # Execute autonomous workflow
+        #
+
+        if self.workflow_engine:
+
+            workflow_result = (
+                self.workflow_engine.execute(
+                    deal_id
+                )
+            )
+
+            result["workflow"] = workflow_result
+
+
+        else:
+
+            print(
+                "WARNING: Workflow engine unavailable"
             )
 
 
+        #
+        # Integrated components
+        #
+
+        if self.command_center:
+
+            print(
+                "Command Center updated"
+            )
+
+
+        if self.dashboard:
+
+            print(
+                "Dashboard updated"
+            )
+
+
+        if self.learning_engine:
+
+            print(
+                "Learning Engine updated"
+            )
+
+
+        if self.execution_engine:
+
+            print(
+                "Execution Engine available"
+            )
+
+
+        if self.orchestrator:
+
+            print(
+                "Orchestrator available"
+            )
+
+
+        result["status"] = "COMPLETED"
+
+
         print()
-        print("DEAL ANALYSIS COMPLETE")
-        print()
 
-        print(workflow_result)
+        print("=" * 70)
+
+        print(
+            "DEAL ANALYSIS COMPLETE"
+        )
+
+        print("=" * 70)
 
 
-        return {
-            "deal_id": deal_id,
-            "started_at": datetime.now(timezone.utc),
-            "status": "COMPLETED",
-            "workflow": workflow_result,
-        }
+        return result

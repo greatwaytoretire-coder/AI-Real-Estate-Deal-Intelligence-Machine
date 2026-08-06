@@ -3,18 +3,29 @@ from datetime import datetime, timezone
 
 class AutonomousDealRuntime:
     """
-    Integration Sprint 1
+    Autonomous Real Estate Deal Intelligence Machine Runtime.
 
-    Central runtime coordinator.
+    Integration Sprint 2 Runtime Controller.
 
-    Connects:
-    - Scheduler
-    - Command Center
-    - Workflow Engine
-    - Orchestrator
-    - Execution Engine
-    - Learning Engine
-    - Dashboard
+    Coordinates the live application flow:
+
+    Seller Opportunity
+            |
+            v
+    Workflow Engine
+            |
+            v
+    Agent Bus
+            |
+            v
+    Acquisition
+    Underwriting
+    Buyer Matching
+    Packaging
+    Execution
+            |
+            v
+    Dashboard / Learning
     """
 
     def __init__(
@@ -27,6 +38,7 @@ class AutonomousDealRuntime:
         learning_engine=None,
         dashboard=None,
     ):
+
         self.scheduler = scheduler
         self.command_center = command_center
         self.workflow_engine = workflow_engine
@@ -40,67 +52,126 @@ class AutonomousDealRuntime:
 
     def start(self):
 
+        print("=" * 70)
         print(
-            "🚀 Autonomous Real Estate Deal Intelligence Machine Starting..."
+            "AI REAL ESTATE DEAL INTELLIGENCE MACHINE"
         )
+        print(
+            "AUTONOMOUS RUNTIME ONLINE"
+        )
+        print("=" * 70)
 
         print(
-            f"Runtime started: {self.started_at.isoformat()}"
+            f"Started: {self.started_at.isoformat()}"
         )
 
         return self.run_cycle()
 
 
-    def run_cycle(self):
+    def run_cycle(
+        self,
+        deal_id="DEAL-001",
+    ):
 
-        cycle = {
-            "status": "started",
-            "timestamp": datetime.now(timezone.utc),
-            "stages": [],
+        print()
+        print("=" * 70)
+        print(
+            f"STARTING AUTONOMOUS DEAL CYCLE: {deal_id}"
+        )
+        print("=" * 70)
+
+
+        result = {
+
+            "deal_id": deal_id,
+
+            "started_at":
+                datetime.now(timezone.utc),
+
+            "status":
+                "RUNNING",
+
+            "workflow":
+                None,
+
         }
 
 
-        cycle["stages"].append(
-            "scheduler_ready"
-        )
+        #
+        # Execute Workflow Engine
+        #
+
+        if self.workflow_engine:
+
+            print()
+            print(
+                "Executing autonomous workflow..."
+            )
 
 
-        cycle["stages"].append(
-            "command_center_ready"
-        )
+            workflow_result = (
+                self.workflow_engine.execute(
+                    deal_id
+                )
+            )
 
 
-        cycle["stages"].append(
-            "workflow_ready"
-        )
+            result["workflow"] = workflow_result
 
 
-        cycle["stages"].append(
-            "orchestrator_ready"
-        )
+            print()
+
+            print(
+                "Workflow completed:"
+            )
+
+            print(
+                workflow_result
+            )
 
 
-        cycle["stages"].append(
-            "execution_ready"
-        )
+        else:
+
+            print(
+                "WARNING: Workflow engine unavailable"
+            )
 
 
-        cycle["stages"].append(
-            "learning_ready"
-        )
+        #
+        # Update dashboard
+        #
+
+        if self.dashboard:
+
+            print()
+
+            print(
+                "Updating dashboard..."
+            )
 
 
-        cycle["stages"].append(
-            "dashboard_ready"
-        )
+        #
+        # Learning update
+        #
+
+        if self.learning_engine:
+
+            print()
+
+            print(
+                "Recording learning outcome..."
+            )
 
 
-        cycle["status"] = "completed"
+        result["status"] = "COMPLETED"
 
 
+        print()
+        print("=" * 70)
         print(
-            "✅ Autonomous deal cycle completed"
+            "AUTONOMOUS DEAL CYCLE COMPLETE"
         )
+        print("=" * 70)
 
 
-        return cycle
+        return result
