@@ -56,14 +56,29 @@ from ai_real_estate_deal_intelligence_machine.learning.pattern_detector import (
 )
 
 
+from ai_real_estate_deal_intelligence_machine.learning.learning_memory import (
+    LearningMemory,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.adaptation_rules import (
+    AdaptationRules,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.decision_modifier import (
+    DecisionModifier,
+)
+
+
 
 class AutonomousPipeline:
     """
     End-to-end autonomous investment pipeline.
 
-    Sprint 4 Part 3 Upgrade:
+    Sprint 4 Part 6 Upgrade:
 
-    Adds learning intelligence.
+    Adds adaptive learning intelligence.
 
     Flow:
 
@@ -73,10 +88,16 @@ class AutonomousPipeline:
     Deal Intelligence
           |
           v
+    Adaptive Learning Layer
+          |
+          v
+    Decision Modification
+          |
+          v
     Buyer Matching
           |
           v
-    Deal Package
+    Deal Packaging
           |
           v
     Execution
@@ -85,10 +106,7 @@ class AutonomousPipeline:
     Deal Memory
           |
           v
-    Learning Engine
-          |
-          v
-    Pattern Detection
+    Learning Update
     """
 
 
@@ -109,13 +127,21 @@ class AutonomousPipeline:
         self.deal_repository = DealRepository()
 
 
-        #
-        # Sprint 4 Part 3 Learning Layer
-        #
+
+        # Learning System
 
         self.learning_repository = LearningRepository()
 
         self.pattern_detector = PatternDetector()
+
+
+        # Adaptive Intelligence Layer
+
+        self.learning_memory = LearningMemory()
+
+        self.adaptation_rules = AdaptationRules()
+
+        self.decision_modifier = DecisionModifier()
 
 
 
@@ -144,6 +170,7 @@ class AutonomousPipeline:
         )
 
 
+
         seller_results = self.seller_pipeline.analyze_lead(
 
             market=context.opportunity["market"],
@@ -170,6 +197,7 @@ class AutonomousPipeline:
         )
 
 
+
         intelligence_result = self.intelligence.analyze(
 
             property_id=context.deal_id,
@@ -190,29 +218,82 @@ class AutonomousPipeline:
         print()
 
         print(
-            "STEP 3 - Buyer Matching"
+            "STEP 3 - Adaptive Learning Decision Adjustment"
         )
+
+
+
+        adaptive_result = self.decision_modifier.modify(
+
+            {
+
+                "deal_score":
+                    intelligence_result.deal_score,
+
+                "recommendation":
+                    intelligence_result.recommendation,
+
+                "profit_margin":
+                    intelligence_result.profit_margin,
+
+                "risk_level":
+                    intelligence_result.risk_level,
+
+            }
+
+        )
+
+
+
+        print(adaptive_result)
+
+
+
+        print()
+
+        print(
+            "STEP 4 - Buyer Matching"
+        )
+
 
 
         buyers = [
 
             {
+
                 "buyer_id": "BUYER-001",
+
                 "buyer_name": "Detroit Cash Investors",
+
                 "preferred_markets": ["Detroit"],
-                "preferred_property_types": ["single_family"],
+
+                "preferred_property_types": [
+                    "single_family"
+                ],
+
                 "investment_score": 95,
+
             },
 
+
             {
+
                 "buyer_id": "BUYER-002",
+
                 "buyer_name": "Midwest Rental Group",
+
                 "preferred_markets": ["Detroit"],
-                "preferred_property_types": ["multi_family"],
+
+                "preferred_property_types": [
+                    "multi_family"
+                ],
+
                 "investment_score": 85,
+
             },
 
         ]
+
 
 
         buyer_matches = self.buyer_matching.match(
@@ -221,13 +302,16 @@ class AutonomousPipeline:
 
             deal={
 
-                "market": context.opportunity["market"],
+                "market":
+                    context.opportunity["market"],
 
-                "property_type": "single_family",
+                "property_type":
+                    "single_family",
 
             },
 
         )
+
 
 
         print(buyer_matches)
@@ -237,8 +321,9 @@ class AutonomousPipeline:
         print()
 
         print(
-            "STEP 4 - Deal Package Generation"
+            "STEP 5 - Deal Package Generation"
         )
+
 
 
         roi_percentage = (
@@ -252,34 +337,51 @@ class AutonomousPipeline:
         )
 
 
+
         underwriting = {
+
 
             "property_id":
                 intelligence_result.property_id,
 
+
             "address":
                 context.opportunity["property_address"],
+
 
             "arv":
                 intelligence_result.estimated_value,
 
+
             "purchase_price":
                 intelligence_result.purchase_price,
+
 
             "repair_cost":
                 intelligence_result.repair_cost,
 
+
             "projected_profit":
                 intelligence_result.projected_profit,
+
 
             "roi_percentage":
                 roi_percentage,
 
+
             "recommendation":
-                intelligence_result.recommendation,
+                adaptive_result.get(
+                    "recommendation",
+                    intelligence_result.recommendation,
+                ),
+
 
             "deal_score":
-                intelligence_result.deal_score,
+                adaptive_result.get(
+                    "adjusted_score",
+                    intelligence_result.deal_score,
+                ),
+
 
             "risk_level":
                 intelligence_result.risk_level,
@@ -334,8 +436,9 @@ class AutonomousPipeline:
         print()
 
         print(
-            "STEP 5 - Execution Readiness"
+            "STEP 6 - Execution Readiness"
         )
+
 
 
         execution_result = self.execution.execute(
@@ -345,6 +448,7 @@ class AutonomousPipeline:
         )
 
 
+
         print(execution_result)
 
 
@@ -352,8 +456,9 @@ class AutonomousPipeline:
         print()
 
         print(
-            "STEP 6 - Saving Deal Memory"
+            "STEP 7 - Saving Deal Memory"
         )
+
 
 
         deal_record = DealRecord(
@@ -364,9 +469,9 @@ class AutonomousPipeline:
 
             seller_id=seller_results[0].seller_id,
 
-            recommendation=intelligence_result.recommendation,
+            recommendation=underwriting["recommendation"],
 
-            deal_score=intelligence_result.deal_score,
+            deal_score=underwriting["deal_score"],
 
             projected_profit=intelligence_result.projected_profit,
 
@@ -379,6 +484,7 @@ class AutonomousPipeline:
         )
 
 
+
         self.deal_repository.save_deal(
 
             deal_record
@@ -386,11 +492,6 @@ class AutonomousPipeline:
         )
 
 
-        print()
-
-        print(
-            "Deal Saved:"
-        )
 
         print(deal_record)
 
@@ -399,7 +500,7 @@ class AutonomousPipeline:
         print()
 
         print(
-            "STEP 7 - Learning System Update"
+            "STEP 8 - Learning System Update"
         )
 
 
@@ -410,12 +511,12 @@ class AutonomousPipeline:
 
             lesson=(
 
-                "High scoring acquisition opportunity detected "
-                "with strong profit margin."
+                "Adaptive acquisition intelligence evaluated "
+                "deal performance and updated decision confidence."
 
             ),
 
-            category="SUCCESSFUL_ACQUISITION",
+            category="ADAPTIVE_LEARNING",
 
             created_at=datetime.now(timezone.utc),
 
@@ -430,6 +531,7 @@ class AutonomousPipeline:
         )
 
 
+
         patterns = self.pattern_detector.analyze(
 
             self.learning_repository.get_all()
@@ -437,26 +539,27 @@ class AutonomousPipeline:
         )
 
 
-        print()
 
-        print(
-            "Learning Record:"
+        self.learning_memory.store(
+
+            {
+
+                "deal_id":
+                    context.deal_id,
+
+                "patterns":
+                    patterns,
+
+                "adaptive_result":
+                    adaptive_result,
+
+            }
+
         )
 
-        print(
-            learning_record
-        )
 
 
-        print()
-
-        print(
-            "Detected Patterns:"
-        )
-
-        print(
-            patterns
-        )
+        print(patterns)
 
 
 
@@ -487,6 +590,10 @@ class AutonomousPipeline:
                 intelligence_result,
 
 
+            "adaptive_learning":
+                adaptive_result,
+
+
             "buyer_matches":
                 buyer_matches,
 
@@ -512,7 +619,7 @@ class AutonomousPipeline:
 
 
             "recommendation":
-                intelligence_result.recommendation,
+                underwriting["recommendation"],
 
 
             "status":

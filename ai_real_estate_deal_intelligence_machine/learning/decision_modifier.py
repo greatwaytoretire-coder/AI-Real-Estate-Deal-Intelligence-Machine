@@ -3,74 +3,155 @@ from typing import Dict, Any
 
 class DecisionModifier:
     """
-    Applies learned intelligence adjustments
-    to future investment decisions.
+    Adaptive decision modification engine.
+
+    Adjusts investment decisions using
+    accumulated learning signals.
     """
 
 
-    def apply(
+
+    def __init__(self):
+
+        self.minimum_score = 0
+
+        self.maximum_score = 100
+
+
+
+    def modify(
         self,
-        decision: Dict[str, Any],
-        learning_rules: Dict[str, Any],
+        decision_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
-        Modify deal decisions using
-        adaptive learning signals.
+        Modify a deal recommendation using
+        adaptive intelligence rules.
         """
 
-
-        modified_decision = decision.copy()
-
-
-        original_score = modified_decision.get(
+        original_score = decision_data.get(
             "deal_score",
-            0
+            0,
         )
 
 
-        confidence = learning_rules.get(
-            "confidence",
-            0
+        recommendation = decision_data.get(
+            "recommendation",
+            "REVIEW",
         )
 
 
-        adjustment = 0
-
-
-        if confidence >= 50:
-
-            adjustment += 5
-
-
-        if confidence >= 75:
-
-            adjustment += 5
-
-
-        modified_score = min(
-            original_score + adjustment,
-            100
+        risk_level = decision_data.get(
+            "risk_level",
+            "UNKNOWN",
         )
 
 
-        modified_decision["original_score"] = (
-            original_score
+        profit_margin = decision_data.get(
+            "profit_margin",
+            0,
         )
 
 
-        modified_decision["learning_adjustment"] = (
-            adjustment
+
+        adjusted_score = original_score
+
+
+
+        reasoning = []
+
+
+
+        # Strong profit margin reinforcement
+
+        if profit_margin >= 50:
+
+            adjusted_score += 5
+
+            reasoning.append(
+                "High profit margin increased confidence."
+            )
+
+
+
+        # Risk adjustment
+
+        if risk_level == "LOW":
+
+            adjusted_score += 5
+
+            reasoning.append(
+                "Low risk profile increased confidence."
+            )
+
+
+        elif risk_level == "HIGH":
+
+            adjusted_score -= 10
+
+            reasoning.append(
+                "High risk profile reduced confidence."
+            )
+
+
+
+        # Clamp score
+
+        adjusted_score = max(
+
+            self.minimum_score,
+
+            min(
+                adjusted_score,
+                self.maximum_score,
+            ),
+
         )
 
 
-        modified_decision["adaptive_score"] = (
-            modified_score
-        )
+
+        # Update recommendation
+
+        if adjusted_score >= 85:
+
+            recommendation = "ACQUIRE"
 
 
-        modified_decision["learning_confidence"] = (
-            confidence
-        )
+        elif adjusted_score >= 65:
+
+            recommendation = "REVIEW"
 
 
-        return modified_decision
+        else:
+
+            recommendation = "PASS"
+
+
+
+        return {
+
+
+            "original_score":
+
+                original_score,
+
+
+            "adjusted_score":
+
+                adjusted_score,
+
+
+            "recommendation":
+
+                recommendation,
+
+
+            "reasoning":
+
+                reasoning,
+
+
+            "status":
+
+                "ADAPTIVE_DECISION_COMPLETE",
+
+        }
