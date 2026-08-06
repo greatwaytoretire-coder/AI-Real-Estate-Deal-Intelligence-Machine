@@ -1,78 +1,110 @@
-from __future__ import annotations
-
-from typing import Dict
-
-from ai_real_estate_deal_intelligence_machine.execution.execution_models import (
-    DealExecutionPlan,
-    ExecutionTask,
-)
+from datetime import datetime, timezone
 
 
 class DealExecutionEngine:
     """
-    Executes the real estate deal workflow.
+    Final execution readiness engine.
 
-    Future integrations:
-    - CRM automation
-    - Email outreach
-    - Contract workflows
-    - Closing coordination
+    Converts an approved deal package into
+    an actionable acquisition workflow.
+
+    Flow:
+
+    Deal Package
+          |
+          v
+    Execution Validation
+          |
+          v
+    Acquisition Readiness
+          |
+          v
+    Execution Result
     """
 
-    DEFAULT_TASKS = [
-        "RUN_ACQUISITION_ANALYSIS",
-        "RUN_UNDERWRITING",
-        "MATCH_BUYERS",
-        "GENERATE_DEAL_PACKAGE",
-        "EXECUTE_DISPOSITION",
-    ]
 
-    def create_execution_plan(
+    def __init__(self):
+
+        self.executed_deals = []
+
+
+
+    def execute(
         self,
-        property_data: Dict,
-    ) -> DealExecutionPlan:
+        package,
+    ):
+        """
+        Execute deal readiness workflow.
+        """
 
-        property_id = property_data.get(
-            "property_id",
-            "PROP-001",
-        )
 
-        tasks = [
-            ExecutionTask(task_name=name)
-            for name in self.DEFAULT_TASKS
-        ]
+        print()
 
-        return DealExecutionPlan(
-            property_id=property_id,
-            tasks=tasks,
-            status="READY",
+        print(
+            "Executing deal readiness analysis..."
         )
 
 
-    def execute_task(
-        self,
-        plan: DealExecutionPlan,
-        task_name: str,
-    ) -> DealExecutionPlan:
+        result = {
 
-        for task in plan.tasks:
+            "deal_id":
+                package.property_id,
 
-            if task.task_name == task_name:
 
-                task.status = "COMPLETED"
+            "status":
+                "READY",
 
-                task.result = (
-                    f"{task_name} completed successfully."
-                )
 
-        completed = all(
-            task.status == "COMPLETED"
-            for task in plan.tasks
+            "recommendation":
+                package.recommendation,
+
+
+            "purchase_price":
+                package.purchase_price,
+
+
+            "arv":
+                package.arv,
+
+
+            "projected_profit":
+                package.projected_profit,
+
+
+            "roi":
+                package.roi,
+
+
+            "buyers":
+
+                package.buyer_recommendations,
+
+
+            "executed_at":
+
+                datetime.now(
+                    timezone.utc
+                ),
+
+        }
+
+
+
+        self.executed_deals.append(
+            result
         )
 
-        if completed:
-            plan.status = "COMPLETED"
-        else:
-            plan.status = "IN_PROGRESS"
 
-        return plan
+
+        print(
+            "Execution readiness complete."
+        )
+
+
+        return result
+
+
+
+    def get_execution_history(self):
+
+        return self.executed_deals

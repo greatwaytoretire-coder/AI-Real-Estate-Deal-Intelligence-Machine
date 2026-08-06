@@ -1,49 +1,65 @@
 from datetime import datetime, timezone
 
+from ai_real_estate_deal_intelligence_machine.runtime.deal_context import (
+    DealContext,
+)
+
+from ai_real_estate_deal_intelligence_machine.runtime.pipeline import (
+    AutonomousPipeline,
+)
+
 
 class ApplicationService:
     """
-    Main application service.
+    Main application coordinator.
 
-    Central coordinator for the Autonomous Real Estate
-    Deal Intelligence Machine.
+    Converts an opportunity into a complete
+    autonomous investment analysis.
 
-    Integration Flow:
+    Flow:
 
-    Deal Request
+    Opportunity
         |
         v
-    Application Service
+    Runtime Pipeline
         |
         v
-    Workflow Engine
+    Seller Analysis
         |
         v
-    Agent Integration Bus
+    Financial Intelligence
         |
         v
-    Autonomous Deal Result
+    Deal Recommendation
+        |
+        v
+    Buyer Matching
+        |
+        v
+    Deal Package
+        |
+        v
+    Execution
     """
-
 
     def __init__(
         self,
+        pipeline: AutonomousPipeline,
         command_center=None,
         dashboard=None,
-        workflow_engine=None,
         orchestrator=None,
-        execution_engine=None,
         learning_engine=None,
-        bus=None,
     ):
 
+        self.pipeline = pipeline
+
         self.command_center = command_center
+
         self.dashboard = dashboard
-        self.workflow_engine = workflow_engine
+
         self.orchestrator = orchestrator
-        self.execution_engine = execution_engine
+
         self.learning_engine = learning_engine
-        self.bus = bus
 
         self.started_at = datetime.now(
             timezone.utc
@@ -52,141 +68,54 @@ class ApplicationService:
 
     def analyze_deal(
         self,
-        deal_id=None,
-        opportunity=None,
+        deal_id="DEAL-001",
     ):
-        """
-        Main entry point called by main.py.
-
-        Supports:
-            analyze_deal(deal_id="DEAL-001")
-
-        and future:
-
-            analyze_deal(opportunity={...})
-        """
-
-
-        if deal_id is None:
-
-            deal_id = "DEAL-001"
-
-
-        if opportunity is None:
-
-            opportunity = {
-
-                "market": "Detroit",
-
-                "property_address":
-                    "123 Main Street",
-
-                "estimated_value":
-                    275000,
-
-                "motivation_score":
-                    92,
-
-                "distress_signals":
-                    [
-                        "Vacant Property",
-                        "Tax Delinquent",
-                    ],
-            }
-
-
-        return self.analyze_property(
-            deal_id=deal_id,
-            opportunity=opportunity,
-        )
-
-
-    def analyze_property(
-        self,
-        deal_id,
-        opportunity,
-    ):
-
 
         print()
 
         print("=" * 70)
 
         print(
-            "AUTONOMOUS PROPERTY ANALYSIS STARTED"
+            "AUTONOMOUS INVESTMENT ANALYSIS STARTED"
         )
 
         print("=" * 70)
 
 
-        print()
+        opportunity = {
 
-        print(
-            "Deal ID:",
-            deal_id
-        )
+            "market":
+                "Detroit",
 
+            "property_address":
+                "123 Main Street",
 
-        print()
+            "estimated_value":
+                275000,
 
-        print(
-            "Opportunity:"
-        )
+            "motivation_score":
+                92,
 
-        print(
-            opportunity
-        )
-
-
-        result = {
-
-            "deal_id":
-                deal_id,
-
-            "started_at":
-                datetime.now(
-                    timezone.utc
-                ),
-
-            "status":
-                "STARTED",
-
-            "workflow":
-                None,
+            "distress_signals":
+                [
+                    "Vacant Property",
+                    "Tax Delinquent",
+                ],
         }
 
 
-        #
-        # Execute autonomous workflow
-        #
+        context = DealContext(
 
-        if self.workflow_engine:
+            deal_id=deal_id,
 
-            workflow_result = (
-                self.workflow_engine.execute(
-                    deal_id
-                )
-            )
+            opportunity=opportunity,
 
-            result["workflow"] = workflow_result
+        )
 
 
-        else:
-
-            print(
-                "WARNING: Workflow engine unavailable"
-            )
-
-
-        #
-        # Integrated components
-        #
-
-        if self.command_center:
-
-            print(
-                "Command Center updated"
-            )
+        result = self.pipeline.execute(
+            context
+        )
 
 
         if self.dashboard:
@@ -196,28 +125,18 @@ class ApplicationService:
             )
 
 
+        if self.command_center:
+
+            print(
+                "Command Center updated"
+            )
+
+
         if self.learning_engine:
 
             print(
-                "Learning Engine updated"
+                "Learning engine updated"
             )
-
-
-        if self.execution_engine:
-
-            print(
-                "Execution Engine available"
-            )
-
-
-        if self.orchestrator:
-
-            print(
-                "Orchestrator available"
-            )
-
-
-        result["status"] = "COMPLETED"
 
 
         print()
@@ -225,7 +144,7 @@ class ApplicationService:
         print("=" * 70)
 
         print(
-            "DEAL ANALYSIS COMPLETE"
+            "AUTONOMOUS INVESTMENT ANALYSIS COMPLETE"
         )
 
         print("=" * 70)

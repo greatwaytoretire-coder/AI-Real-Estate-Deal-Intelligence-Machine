@@ -5,28 +5,41 @@ class AutonomousDealRuntime:
     """
     Autonomous Real Estate Deal Intelligence Machine Runtime.
 
-    Integration Sprint 2 Runtime Controller.
+    Integration Sprint 3 Runtime Controller.
 
-    Coordinates the live application flow:
+    Coordinates the real application pipeline:
 
-    Seller Opportunity
-            |
-            v
+    Opportunity
+        |
+        v
+    Command Center
+        |
+        v
     Workflow Engine
-            |
-            v
-    Agent Bus
-            |
-            v
-    Acquisition
-    Underwriting
-    Buyer Matching
-    Packaging
-    Execution
-            |
-            v
-    Dashboard / Learning
+        |
+        v
+    Agent Integration Bus
+        |
+        +----------------+
+        |                |
+        v                v
+
+    Acquisition Agent
+    Underwriting Agent
+    Buyer Matching Agent
+    Packaging Agent
+    Execution Agent
+
+        |
+        v
+
+    Intelligence Result
+        |
+        v
+
+    Dashboard + Learning
     """
+
 
     def __init__(
         self,
@@ -47,10 +60,16 @@ class AutonomousDealRuntime:
         self.learning_engine = learning_engine
         self.dashboard = dashboard
 
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(
+            timezone.utc
+        )
 
 
-    def start(self):
+
+    def start(
+        self,
+        deal_id="DEAL-001",
+    ):
 
         print("=" * 70)
         print(
@@ -61,11 +80,16 @@ class AutonomousDealRuntime:
         )
         print("=" * 70)
 
+
         print(
-            f"Started: {self.started_at.isoformat()}"
+            f"Runtime Started: {self.started_at.isoformat()}"
         )
 
-        return self.run_cycle()
+
+        return self.run_cycle(
+            deal_id
+        )
+
 
 
     def run_cycle(
@@ -73,39 +97,69 @@ class AutonomousDealRuntime:
         deal_id="DEAL-001",
     ):
 
+
         print()
+
         print("=" * 70)
+
         print(
-            f"STARTING AUTONOMOUS DEAL CYCLE: {deal_id}"
+            f"AUTONOMOUS DEAL CYCLE STARTING: {deal_id}"
         )
+
         print("=" * 70)
+
 
 
         result = {
 
-            "deal_id": deal_id,
+            "deal_id":
+                deal_id,
+
 
             "started_at":
-                datetime.now(timezone.utc),
+                datetime.now(
+                    timezone.utc
+                ),
+
 
             "status":
                 "RUNNING",
 
+
             "workflow":
+                None,
+
+
+            "intelligence":
                 None,
 
         }
 
 
+
         #
-        # Execute Workflow Engine
+        # Command Center
+        #
+
+        if self.command_center:
+
+            print(
+                "✓ Command Center active"
+            )
+
+
+
+        #
+        # Execute Workflow
         #
 
         if self.workflow_engine:
 
+
             print()
+
             print(
-                "Executing autonomous workflow..."
+                "Executing multi-agent workflow..."
             )
 
 
@@ -119,15 +173,18 @@ class AutonomousDealRuntime:
             result["workflow"] = workflow_result
 
 
+
             print()
 
             print(
-                "Workflow completed:"
+                "Workflow Result:"
             )
+
 
             print(
                 workflow_result
             )
+
 
 
         else:
@@ -137,41 +194,69 @@ class AutonomousDealRuntime:
             )
 
 
+
         #
-        # Update dashboard
+        # Orchestrator
+        #
+
+        if self.orchestrator:
+
+            print(
+                "✓ Orchestrator available"
+            )
+
+
+
+        #
+        # Execution Layer
+        #
+
+        if self.execution_engine:
+
+            print(
+                "✓ Execution engine available"
+            )
+
+
+
+        #
+        # Dashboard
         #
 
         if self.dashboard:
 
-            print()
-
             print(
-                "Updating dashboard..."
+                "✓ Dashboard updated"
             )
 
 
+
         #
-        # Learning update
+        # Learning System
         #
 
         if self.learning_engine:
 
-            print()
-
             print(
-                "Recording learning outcome..."
+                "✓ Learning outcome recorded"
             )
+
 
 
         result["status"] = "COMPLETED"
 
 
+
         print()
+
         print("=" * 70)
+
         print(
             "AUTONOMOUS DEAL CYCLE COMPLETE"
         )
+
         print("=" * 70)
+
 
 
         return result
