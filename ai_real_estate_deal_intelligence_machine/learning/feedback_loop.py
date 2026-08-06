@@ -17,20 +17,43 @@ from ai_real_estate_deal_intelligence_machine.learning.scoring_adjuster import (
 )
 
 
+from ai_real_estate_deal_intelligence_machine.learning.adaptive_engine import (
+    AdaptiveEngine,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.confidence_model import (
+    ConfidenceModel,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.strategy_optimizer import (
+    StrategyOptimizer,
+)
+
+
 
 class FeedbackLoop:
     """
     Autonomous learning feedback coordinator.
 
+    Sprint 4 Part 5 Upgrade:
+
     Connects:
 
     Outcome Analysis
-        |
-        v
+            |
+            v
     Pattern Detection
-        |
-        v
+            |
+            v
     Scoring Adjustment
+            |
+            v
+    Adaptive Intelligence
+            |
+            v
+    Strategy Optimization
 
     """
 
@@ -45,6 +68,15 @@ class FeedbackLoop:
         self.scoring_adjuster = ScoringAdjuster()
 
 
+        # Sprint 4 Part 5 Adaptive Layer
+
+        self.adaptive_engine = AdaptiveEngine()
+
+        self.confidence_model = ConfidenceModel()
+
+        self.strategy_optimizer = StrategyOptimizer()
+
+
 
     def process(
         self,
@@ -52,7 +84,7 @@ class FeedbackLoop:
         actual: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
-        Run complete learning feedback cycle.
+        Run complete autonomous learning feedback cycle.
         """
 
 
@@ -122,13 +154,92 @@ class FeedbackLoop:
 
 
 
+        # ==========================================
+        # STEP 4 - Record Adaptive Learning
+        # ==========================================
+
+
+        self.adaptive_engine.record_learning(
+
+            {
+
+                "prediction":
+
+                    prediction,
+
+
+                "actual":
+
+                    actual,
+
+
+                "lessons":
+
+                    outcome_analysis.lessons,
+
+            }
+
+        )
+
+
+
+        # ==========================================
+        # STEP 5 - Calculate Confidence
+        # ==========================================
+
+
+        confidence = (
+
+            self.confidence_model.calculate(
+
+                learning_events=len(
+
+                    self.adaptive_engine.learning_history
+
+                ),
+
+                successful_events=1,
+
+            )
+
+        )
+
+
+
+        # ==========================================
+        # STEP 6 - Optimize Strategy
+        # ==========================================
+
+
+        strategy = (
+
+            self.strategy_optimizer.optimize(
+
+                confidence,
+
+                patterns.get(
+
+                    "patterns",
+
+                    []
+
+                ),
+
+            )
+
+        )
+
+
+
         feedback = {
 
 
             "processed_at":
 
                 datetime.now(
+
                     timezone.utc
+
                 ),
 
 
@@ -147,9 +258,19 @@ class FeedbackLoop:
                 adjustments,
 
 
+            "adaptive_confidence":
+
+                confidence,
+
+
+            "strategy_optimization":
+
+                strategy,
+
+
             "status":
 
-                "LEARNING_COMPLETE",
+                "ADAPTIVE_LEARNING_COMPLETE",
 
         }
 
@@ -158,7 +279,7 @@ class FeedbackLoop:
         print()
 
         print(
-            "Learning Feedback Complete:"
+            "Adaptive Learning Feedback Complete:"
         )
 
         print(
