@@ -1,125 +1,201 @@
-from datetime import datetime, timezone
 from typing import Dict, Any
+
+
+from ai_real_estate_deal_intelligence_machine.learning.confidence_model import (
+    ConfidenceModel,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.strategy_optimizer import (
+    StrategyOptimizer,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.learning.learning_memory import (
+    LearningMemory,
+)
+
 
 
 class AdaptiveEngine:
     """
-    Adaptive intelligence layer.
+    Adaptive investment intelligence engine.
 
-    Uses historical learning signals to improve
-    future investment analysis decisions.
+    Sprint 4 Part 7:
 
-    Sprint 4 Part 5 Foundation:
+    Uses historical experience to improve
+    future acquisition decisions.
 
-    Learning History
-          |
-          v
-    Confidence Evaluation
-          |
-          v
-    Strategy Adjustment
+    Flow:
+
+    Current Deal
+        |
+        v
+    Historical Memory
+        |
+        v
+    Confidence Model
+        |
+        v
+    Strategy Optimization
+        |
+        v
+    Adaptive Decision
     """
+
+
 
     def __init__(self):
 
-        self.learning_history = []
+        self.confidence_model = ConfidenceModel()
+
+        self.strategy_optimizer = StrategyOptimizer()
+
+        self.learning_memory = LearningMemory()
 
 
 
-    def record_learning(
+    def evaluate(
         self,
-        learning_event: Dict[str, Any],
-    ):
+        deal: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
-        Store learning events for future adaptation.
-        """
-
-        learning_event["recorded_at"] = datetime.now(
-            timezone.utc
-        )
-
-        self.learning_history.append(
-            learning_event
-        )
-
-        return learning_event
-
-
-
-    def evaluate_confidence(
-        self,
-    ):
-        """
-        Calculate current learning confidence.
-
-        Foundation model:
-        More historical learning events
-        increase system confidence.
+        Evaluate a deal using learned experience.
         """
 
-        total_events = len(
-            self.learning_history
+
+
+        historical_summary = (
+
+            self.learning_memory.analyze_history()
+
         )
 
 
-        confidence = min(
-            total_events * 10,
-            100
+
+        confidence_adjustment = (
+
+            self.confidence_model.evaluate(
+
+                deal,
+
+                historical_summary,
+
+            )
+
         )
+
+
+
+        strategy_result = (
+
+            self.strategy_optimizer.optimize(
+
+                deal,
+
+                historical_summary,
+
+            )
+
+        )
+
+
+
+        original_score = (
+
+            deal.get(
+
+                "deal_score",
+
+                0
+
+            )
+
+        )
+
+
+
+        adjusted_score = (
+
+            original_score
+
+            +
+
+            confidence_adjustment.get(
+
+                "adjustment",
+
+                0
+
+            )
+
+        )
+
+
+
+        adjusted_score = max(
+
+            0,
+
+            min(
+
+                adjusted_score,
+
+                100
+
+            )
+
+        )
+
+
+
+        recommendation = (
+
+            "ACQUIRE"
+
+            if adjusted_score >= 75
+
+            else "REVIEW"
+
+        )
+
 
 
         return {
 
-            "learning_events":
-                total_events,
+
+            "original_score":
+
+                original_score,
+
+
+            "adjusted_score":
+
+                adjusted_score,
+
+
+            "recommendation":
+
+                recommendation,
+
+
+            "historical_analysis":
+
+                historical_summary,
+
 
             "confidence":
-                confidence,
+
+                confidence_adjustment,
+
+
+            "strategy":
+
+                strategy_result,
+
+
+            "status":
+
+                "ADAPTIVE_ANALYSIS_COMPLETE",
 
         }
-
-
-
-    def generate_strategy_adjustments(
-        self,
-    ):
-        """
-        Generate adaptive recommendations.
-        """
-
-        confidence_data = self.evaluate_confidence()
-
-
-        adjustments = []
-
-
-        if confidence_data["confidence"] >= 50:
-
-            adjustments.append(
-                "Increase weighting of proven acquisition signals."
-            )
-
-
-        else:
-
-            adjustments.append(
-                "Continue collecting deal outcome data before major strategy changes."
-            )
-
-
-
-        return {
-
-            "confidence":
-                confidence_data,
-
-            "adjustments":
-                adjustments,
-
-            "generated_at":
-                datetime.now(
-                    timezone.utc
-                ),
-
-        }
-    

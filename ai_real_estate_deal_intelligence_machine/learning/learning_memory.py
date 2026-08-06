@@ -1,62 +1,111 @@
-from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import Dict, Any, List
+
+
+from ai_real_estate_deal_intelligence_machine.learning.historical_analyzer import (
+    HistoricalAnalyzer,
+)
+
 
 
 class LearningMemory:
     """
-    Persistent adaptive memory store.
+    Persistent intelligence memory.
 
-    Stores learned investment signals
-    that influence future decisions.
+    Sprint 4 Part 7:
+
+    Stores historical investment outcomes
+    and extracts reusable knowledge.
+
+    Flow:
+
+    Deal Outcome
+        |
+        v
+    Historical Memory
+        |
+        v
+    Pattern Intelligence
     """
+
 
 
     def __init__(self):
 
-        self.memories: List[Dict[str, Any]] = []
+        self.history: List[Dict[str, Any]] = []
+
+        self.historical_analyzer = HistoricalAnalyzer()
 
 
 
     def store(
         self,
-        memory: Dict[str, Any],
+        deal_result: Dict[str, Any],
     ):
+        """
+        Store completed deal experience.
+        """
 
-        memory["created_at"] = datetime.now(
-            timezone.utc
+
+        self.history.append(
+
+            deal_result
+
         )
 
-        self.memories.append(memory)
-
-        return memory
 
 
+    def get_history(
+        self,
+    ) -> List[Dict[str, Any]]:
+        """
+        Return stored investment history.
+        """
 
-    def get_all(self):
 
-        return self.memories
-
-
-
-    def count(self):
-
-        return len(self.memories)
+        return self.history
 
 
 
-    def successful_patterns(self):
+    def analyze_history(
+        self,
+    ) -> Dict[str, Any]:
+        """
+        Convert historical experience
+        into investment intelligence.
+        """
 
-        return [
 
-            memory
+        return self.historical_analyzer.analyze(
 
-            for memory in self.memories
+            self.history
 
-            if memory.get(
-                "outcome"
-            )
-            ==
-            "SUCCESS"
+        )
 
-        ]
-    
+
+
+    def get_learning_summary(
+        self,
+    ) -> Dict[str, Any]:
+        """
+        Provide current machine knowledge.
+        """
+
+
+        return {
+
+
+            "total_deals":
+
+                len(self.history),
+
+
+            "historical_analysis":
+
+                self.analyze_history(),
+
+
+            "status":
+
+                "MEMORY_ACTIVE",
+
+        }

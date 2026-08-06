@@ -61,24 +61,19 @@ from ai_real_estate_deal_intelligence_machine.learning.learning_memory import (
 )
 
 
-from ai_real_estate_deal_intelligence_machine.learning.adaptation_rules import (
-    AdaptationRules,
-)
-
-
-from ai_real_estate_deal_intelligence_machine.learning.decision_modifier import (
-    DecisionModifier,
+from ai_real_estate_deal_intelligence_machine.learning.adaptive_engine import (
+    AdaptiveEngine,
 )
 
 
 
 class AutonomousPipeline:
     """
-    End-to-end autonomous investment pipeline.
+    Autonomous real estate investment intelligence pipeline.
 
-    Sprint 4 Part 6 Upgrade:
+    Sprint 4 Part 7 Upgrade:
 
-    Adds adaptive learning intelligence.
+    Adds historical learning intelligence.
 
     Flow:
 
@@ -88,10 +83,10 @@ class AutonomousPipeline:
     Deal Intelligence
           |
           v
-    Adaptive Learning Layer
+    Historical Learning
           |
           v
-    Decision Modification
+    Adaptive Decision Engine
           |
           v
     Buyer Matching
@@ -103,10 +98,7 @@ class AutonomousPipeline:
     Execution
           |
           v
-    Deal Memory
-          |
-          v
-    Learning Update
+    Memory Update
     """
 
 
@@ -127,21 +119,18 @@ class AutonomousPipeline:
         self.deal_repository = DealRepository()
 
 
-
         # Learning System
 
         self.learning_repository = LearningRepository()
 
         self.pattern_detector = PatternDetector()
 
-
-        # Adaptive Intelligence Layer
-
         self.learning_memory = LearningMemory()
 
-        self.adaptation_rules = AdaptationRules()
 
-        self.decision_modifier = DecisionModifier()
+        # Adaptive Intelligence
+
+        self.adaptive_engine = AdaptiveEngine()
 
 
 
@@ -151,7 +140,6 @@ class AutonomousPipeline:
     ):
 
 
-        print()
 
         print("=" * 70)
 
@@ -163,10 +151,8 @@ class AutonomousPipeline:
 
 
 
-        print()
-
         print(
-            "STEP 1 - Seller Opportunity Analysis"
+            "\nSTEP 1 - Seller Opportunity Analysis"
         )
 
 
@@ -186,14 +172,13 @@ class AutonomousPipeline:
         )
 
 
+
         print(seller_results)
 
 
 
-        print()
-
         print(
-            "STEP 2 - Deal Intelligence Analysis"
+            "\nSTEP 2 - Deal Intelligence Analysis"
         )
 
 
@@ -211,33 +196,40 @@ class AutonomousPipeline:
         )
 
 
+
         print(intelligence_result)
 
 
 
-        print()
-
         print(
-            "STEP 3 - Adaptive Learning Decision Adjustment"
+            "\nSTEP 3 - Historical Adaptive Learning"
         )
 
 
 
-        adaptive_result = self.decision_modifier.modify(
+        adaptive_result = self.adaptive_engine.evaluate(
 
             {
 
                 "deal_score":
                     intelligence_result.deal_score,
 
-                "recommendation":
-                    intelligence_result.recommendation,
-
-                "profit_margin":
-                    intelligence_result.profit_margin,
+                "projected_profit":
+                    intelligence_result.projected_profit,
 
                 "risk_level":
                     intelligence_result.risk_level,
+
+                "roi":
+                    (
+
+                        intelligence_result.projected_profit
+                        /
+                        intelligence_result.purchase_price
+                        *
+                        100
+
+                    ),
 
             }
 
@@ -249,10 +241,8 @@ class AutonomousPipeline:
 
 
 
-        print()
-
         print(
-            "STEP 4 - Buyer Matching"
+            "\nSTEP 4 - Buyer Matching"
         )
 
 
@@ -274,7 +264,6 @@ class AutonomousPipeline:
                 "investment_score": 95,
 
             },
-
 
             {
 
@@ -318,10 +307,8 @@ class AutonomousPipeline:
 
 
 
-        print()
-
         print(
-            "STEP 5 - Deal Package Generation"
+            "\nSTEP 5 - Deal Package Generation"
         )
 
 
@@ -342,48 +329,52 @@ class AutonomousPipeline:
 
 
             "property_id":
+
                 intelligence_result.property_id,
 
 
             "address":
+
                 context.opportunity["property_address"],
 
 
             "arv":
+
                 intelligence_result.estimated_value,
 
 
             "purchase_price":
+
                 intelligence_result.purchase_price,
 
 
             "repair_cost":
+
                 intelligence_result.repair_cost,
 
 
             "projected_profit":
+
                 intelligence_result.projected_profit,
 
 
             "roi_percentage":
+
                 roi_percentage,
 
 
             "recommendation":
-                adaptive_result.get(
-                    "recommendation",
-                    intelligence_result.recommendation,
-                ),
+
+                adaptive_result["recommendation"],
 
 
             "deal_score":
-                adaptive_result.get(
-                    "adjusted_score",
-                    intelligence_result.deal_score,
-                ),
+
+                adaptive_result["adjusted_score"],
 
 
             "risk_level":
+
                 intelligence_result.risk_level,
 
         }
@@ -429,14 +420,13 @@ class AutonomousPipeline:
         )
 
 
+
         print(package)
 
 
 
-        print()
-
         print(
-            "STEP 6 - Execution Readiness"
+            "\nSTEP 6 - Execution Readiness"
         )
 
 
@@ -453,10 +443,8 @@ class AutonomousPipeline:
 
 
 
-        print()
-
         print(
-            "STEP 7 - Saving Deal Memory"
+            "\nSTEP 7 - Saving Deal Memory"
         )
 
 
@@ -497,10 +485,8 @@ class AutonomousPipeline:
 
 
 
-        print()
-
         print(
-            "STEP 8 - Learning System Update"
+            "\nSTEP 8 - Learning Memory Update"
         )
 
 
@@ -511,12 +497,12 @@ class AutonomousPipeline:
 
             lesson=(
 
-                "Adaptive acquisition intelligence evaluated "
-                "deal performance and updated decision confidence."
+                "Historical adaptive intelligence updated "
+                "investment confidence."
 
             ),
 
-            category="ADAPTIVE_LEARNING",
+            category="HISTORICAL_ADAPTIVE_LEARNING",
 
             created_at=datetime.now(timezone.utc),
 
@@ -532,6 +518,28 @@ class AutonomousPipeline:
 
 
 
+        self.learning_memory.store(
+
+            {
+
+                "deal_id":
+                    context.deal_id,
+
+                "status":
+                    "SUCCESS",
+
+                "roi":
+                    roi_percentage,
+
+                "deal_score":
+                    underwriting["deal_score"],
+
+            }
+
+        )
+
+
+
         patterns = self.pattern_detector.analyze(
 
             self.learning_repository.get_all()
@@ -540,30 +548,9 @@ class AutonomousPipeline:
 
 
 
-        self.learning_memory.store(
-
-            {
-
-                "deal_id":
-                    context.deal_id,
-
-                "patterns":
-                    patterns,
-
-                "adaptive_result":
-                    adaptive_result,
-
-            }
-
-        )
-
-
-
         print(patterns)
 
 
-
-        print()
 
         print("=" * 70)
 
