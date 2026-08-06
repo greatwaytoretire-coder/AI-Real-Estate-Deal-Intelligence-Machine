@@ -2,30 +2,50 @@ from ai_real_estate_deal_intelligence_machine.runtime.deal_context import (
     DealContext,
 )
 
+
 from ai_real_estate_deal_intelligence_machine.acquisition.seller_lead_pipeline import (
     SellerLeadPipeline,
 )
+
 
 from ai_real_estate_deal_intelligence_machine.intelligence.deal_intelligence_coordinator import (
     DealIntelligenceCoordinator,
 )
 
+
 from ai_real_estate_deal_intelligence_machine.matching.buyer_matching_engine import (
     BuyerMatchingEngine,
 )
 
+
 from ai_real_estate_deal_intelligence_machine.deal_packaging.deal_package_generator import (
     DealPackageGenerator,
 )
+
 
 from ai_real_estate_deal_intelligence_machine.execution.deal_execution_engine import (
     DealExecutionEngine,
 )
 
 
+from ai_real_estate_deal_intelligence_machine.database.models import (
+    DealRecord,
+)
+
+
+from ai_real_estate_deal_intelligence_machine.database.deal_repository import (
+    DealRepository,
+)
+
+
+
 class AutonomousPipeline:
     """
     End-to-end autonomous investment pipeline.
+
+    Sprint 4 Upgrade:
+
+    Adds persistent deal memory.
 
     Flow:
 
@@ -35,20 +55,21 @@ class AutonomousPipeline:
     Seller Intelligence
             |
             v
-    Deal Underwriting
+    Deal Analysis
             |
             v
     Buyer Matching
             |
             v
-    Investor Package
+    Deal Package
             |
             v
-    Execution Readiness
+    Execution
             |
             v
-    Investment Recommendation
+    Deal Memory Storage
     """
+
 
 
     def __init__(self):
@@ -64,43 +85,56 @@ class AutonomousPipeline:
         self.execution = DealExecutionEngine()
 
 
+        # Sprint 4 Memory Layer
+
+        self.deal_repository = DealRepository()
+
+
 
     def execute(
         self,
         context: DealContext,
     ):
 
+
         print()
+
         print("=" * 70)
+
         print(
             "AUTONOMOUS INVESTMENT ANALYSIS STARTED"
         )
+
         print("=" * 70)
 
 
 
         # =====================================================
-        # STEP 1 - SELLER ANALYSIS
+        # STEP 1 SELLER ANALYSIS
         # =====================================================
 
+
         print()
+
         print(
             "STEP 1 - Seller Opportunity Analysis"
         )
 
 
-        seller_results = self.seller_pipeline.analyze_lead(
+        seller_results = (
+            self.seller_pipeline.analyze_lead(
 
-            market=context.opportunity["market"],
+                market=context.opportunity["market"],
 
-            property_address=context.opportunity["property_address"],
+                property_address=context.opportunity["property_address"],
 
-            estimated_value=context.opportunity["estimated_value"],
+                estimated_value=context.opportunity["estimated_value"],
 
-            motivation_score=context.opportunity["motivation_score"],
+                motivation_score=context.opportunity["motivation_score"],
 
-            distress_signals=context.opportunity["distress_signals"],
+                distress_signals=context.opportunity["distress_signals"],
 
+            )
         )
 
 
@@ -111,30 +145,29 @@ class AutonomousPipeline:
 
 
         # =====================================================
-        # STEP 2 - DEAL INTELLIGENCE
+        # STEP 2 DEAL INTELLIGENCE
         # =====================================================
 
+
         print()
+
         print(
             "STEP 2 - Deal Intelligence Analysis"
         )
 
 
-        purchase_price = 150000
+        intelligence_result = (
+            self.intelligence.analyze(
 
-        repair_cost = 35000
+                property_id=context.deal_id,
 
+                purchase_price=150000,
 
-        intelligence_result = self.intelligence.analyze(
+                estimated_value=context.opportunity["estimated_value"],
 
-            property_id=context.deal_id,
+                repair_cost=35000,
 
-            purchase_price=purchase_price,
-
-            estimated_value=context.opportunity["estimated_value"],
-
-            repair_cost=repair_cost,
-
+            )
         )
 
 
@@ -145,10 +178,12 @@ class AutonomousPipeline:
 
 
         # =====================================================
-        # STEP 3 - BUYER MATCHING
+        # STEP 3 BUYER MATCHING
         # =====================================================
 
+
         print()
+
         print(
             "STEP 3 - Buyer Matching"
         )
@@ -159,37 +194,38 @@ class AutonomousPipeline:
             {
                 "buyer_id": "BUYER-001",
 
-                "buyer_name": "Detroit Cash Investors",
+                "buyer_name":
+                    "Detroit Cash Investors",
 
-                "preferred_markets": [
-                    "Detroit"
-                ],
+                "preferred_markets":
+                    ["Detroit"],
 
-                "preferred_property_types": [
-                    "single_family"
-                ],
+                "preferred_property_types":
+                    ["single_family"],
 
-                "investment_score": 95,
+                "investment_score":
+                    95,
             },
 
 
             {
                 "buyer_id": "BUYER-002",
 
-                "buyer_name": "Midwest Rental Group",
+                "buyer_name":
+                    "Midwest Rental Group",
 
-                "preferred_markets": [
-                    "Detroit"
-                ],
+                "preferred_markets":
+                    ["Detroit"],
 
-                "preferred_property_types": [
-                    "multi_family"
-                ],
+                "preferred_property_types":
+                    ["multi_family"],
 
-                "investment_score": 85,
+                "investment_score":
+                    85,
             },
 
         ]
+
 
 
         deal = {
@@ -197,18 +233,22 @@ class AutonomousPipeline:
             "market":
                 context.opportunity["market"],
 
+
             "property_type":
                 "single_family",
 
         }
 
 
-        buyer_matches = self.buyer_matching.match(
 
-            buyers=buyers,
+        buyer_matches = (
+            self.buyer_matching.match(
 
-            deal=deal,
+                buyers=buyers,
 
+                deal=deal,
+
+            )
         )
 
 
@@ -219,10 +259,12 @@ class AutonomousPipeline:
 
 
         # =====================================================
-        # STEP 4 - DEAL PACKAGE GENERATION
+        # STEP 4 DEAL PACKAGE
         # =====================================================
 
+
         print()
+
         print(
             "STEP 4 - Deal Package Generation"
         )
@@ -243,132 +285,110 @@ class AutonomousPipeline:
         )
 
 
+
         underwriting = {
 
+
             "property_id":
+
                 intelligence_result.property_id,
 
 
             "address":
+
                 context.opportunity["property_address"],
 
 
-            "market":
-                context.opportunity["market"],
+            "arv":
 
+                intelligence_result.estimated_value,
 
-            "deal_score":
-                intelligence_result.deal_score,
-
-
-            "recommendation":
-                intelligence_result.recommendation,
-
-
-            "priority":
-                intelligence_result.priority,
-
-
-            "risk_level":
-                intelligence_result.risk_level,
-
-
-            # Purchase numbers
 
             "purchase_price":
+
                 intelligence_result.purchase_price,
 
 
-            "arv":
-                intelligence_result.estimated_value,
-
-
-            "estimated_value":
-                intelligence_result.estimated_value,
-
-
             "repair_cost":
+
                 intelligence_result.repair_cost,
 
 
             "projected_profit":
+
                 intelligence_result.projected_profit,
 
 
-            "mao":
-                intelligence_result.mao,
-
-
-            "profit_margin":
-                intelligence_result.profit_margin,
-
-
             "roi_percentage":
+
                 roi_percentage,
 
 
-            # Additional package fields
+            "recommendation":
 
-            "after_repair_value":
-                intelligence_result.estimated_value,
-
-
-            "total_investment":
-                (
-                    intelligence_result.purchase_price
-                    +
-                    intelligence_result.repair_cost
-                ),
+                intelligence_result.recommendation,
 
 
-            "investment_strategy":
-                "Fix and Flip / Wholesale Opportunity",
+            "deal_score":
+
+                intelligence_result.deal_score,
 
 
-            "exit_strategy":
-                "Cash Buyer Assignment or Investor Sale",
+            "risk_level":
+
+                intelligence_result.risk_level,
 
         }
 
 
 
-        buyer_data = [
-
-            {
-
-                "buyer_id":
-                    buyer.buyer_id,
+        buyer_data = []
 
 
-                "buyer_name":
-                    buyer.buyer_name,
+        for buyer in buyer_matches:
+
+            buyer_data.append(
+
+                {
+
+                    "buyer_id":
+
+                        buyer.buyer_id,
 
 
-                "score":
-                    buyer.score,
+                    "buyer_name":
+
+                        buyer.buyer_name,
 
 
-                "recommendation":
-                    buyer.recommendation,
+                    "score":
+
+                        buyer.score,
 
 
-                "reasoning":
-                    buyer.reasoning,
+                    "recommendation":
 
-            }
-
-            for buyer in buyer_matches
-
-        ]
+                        buyer.recommendation,
 
 
+                    "reasoning":
 
-        package = self.package_generator.generate(
+                        buyer.reasoning,
 
-            underwriting,
+                }
 
-            buyer_data,
+            )
 
+
+
+        package = (
+            self.package_generator.generate(
+
+                underwriting,
+
+                buyer_data,
+
+            )
         )
 
 
@@ -379,8 +399,9 @@ class AutonomousPipeline:
 
 
         # =====================================================
-        # STEP 5 - EXECUTION
+        # STEP 5 EXECUTION
         # =====================================================
+
 
         print()
 
@@ -389,15 +410,76 @@ class AutonomousPipeline:
         )
 
 
-        execution_result = self.execution.execute(
-
-            package
-
+        execution_result = (
+            self.execution.execute(
+                package
+            )
         )
 
 
         print(
             execution_result
+        )
+
+
+
+        # =====================================================
+        # STEP 6 SAVE DEAL MEMORY
+        # =====================================================
+
+
+        print()
+
+        print(
+            "STEP 6 - Saving Deal Memory"
+        )
+
+
+        deal_record = DealRecord(
+
+            deal_id=context.deal_id,
+
+
+            property_id=intelligence_result.property_id,
+
+
+            seller_id=seller_results[0].seller_id,
+
+
+            recommendation=intelligence_result.recommendation,
+
+
+            deal_score=intelligence_result.deal_score,
+
+
+            projected_profit=intelligence_result.projected_profit,
+
+
+            roi=roi_percentage,
+
+
+            risk_level=intelligence_result.risk_level,
+
+
+            status="COMPLETED",
+
+        )
+
+
+
+        self.deal_repository.save_deal(
+            deal_record
+        )
+
+
+        print()
+
+        print(
+            "Deal Saved:"
+        )
+
+        print(
+            deal_record
         )
 
 
@@ -416,35 +498,49 @@ class AutonomousPipeline:
 
         return {
 
+
             "deal_id":
+
                 context.deal_id,
 
 
             "seller_analysis":
+
                 seller_results,
 
 
             "investment_analysis":
+
                 intelligence_result,
 
 
             "buyer_matches":
+
                 buyer_matches,
 
 
             "deal_package":
+
                 package,
 
 
             "execution":
+
                 execution_result,
 
 
+            "stored_deal":
+
+                deal_record,
+
+
             "recommendation":
+
                 intelligence_result.recommendation,
 
 
             "status":
+
                 "COMPLETED",
 
         }
